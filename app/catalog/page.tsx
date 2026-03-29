@@ -32,6 +32,7 @@ const initialProducts: Product[] = [
     price: 31600,
     image_url: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=600&h=600&fit=crop",
     is_featured: false,
+    is_active: true,
   },
   {
     id: "2",
@@ -39,6 +40,7 @@ const initialProducts: Product[] = [
     price: 83350,
     image_url: "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600&h=600&fit=crop",
     is_featured: false,
+    is_active: true,
   },
   {
     id: "3",
@@ -46,6 +48,7 @@ const initialProducts: Product[] = [
     price: 14500,
     image_url: "https://images.unsplash.com/photo-1506629082955-511b1aa562c8?w=600&h=600&fit=crop",
     is_featured: false,
+    is_active: true,
   },
   {
     id: "4",
@@ -53,6 +56,7 @@ const initialProducts: Product[] = [
     price: 4750,
     image_url: "https://images.unsplash.com/photo-1624222247344-550fb60583dc?w=600&h=600&fit=crop",
     is_featured: false,
+    is_active: true,
   },
   {
     id: "5",
@@ -60,6 +64,7 @@ const initialProducts: Product[] = [
     price: 10300,
     image_url: "https://images.unsplash.com/photo-1611652022419-a9419f74343d?w=600&h=600&fit=crop",
     is_featured: false,
+    is_active: true,
   },
   {
     id: "6",
@@ -67,6 +72,7 @@ const initialProducts: Product[] = [
     price: 11500,
     image_url: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=600&h=600&fit=crop",
     is_featured: false,
+    is_active: true,
   },
   {
     id: "7",
@@ -74,6 +80,7 @@ const initialProducts: Product[] = [
     price: 4505,
     image_url: "https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=600&h=600&fit=crop",
     is_featured: false,
+    is_active: true,
   },
   {
     id: "8",
@@ -81,6 +88,7 @@ const initialProducts: Product[] = [
     price: 29400,
     image_url: "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=600&h=600&fit=crop",
     is_featured: false,
+    is_active: true,
   },
   {
     id: "9",
@@ -88,6 +96,7 @@ const initialProducts: Product[] = [
     price: 55500,
     image_url: "https://images.unsplash.com/photo-1515347619252-60a4bf4fff4f?w=600&h=600&fit=crop",
     is_featured: true,
+    is_active: true,
   },
   {
     id: "10",
@@ -95,6 +104,7 @@ const initialProducts: Product[] = [
     price: 11500,
     image_url: "https://images.unsplash.com/photo-1596703263926-eb0762ee17e4?w=600&h=600&fit=crop",
     is_featured: false,
+    is_active: true,
   },
   {
     id: "11",
@@ -102,6 +112,7 @@ const initialProducts: Product[] = [
     price: 32500,
     image_url: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=600&h=600&fit=crop",
     is_featured: false,
+    is_active: true,
   },
   {
     id: "12",
@@ -109,6 +120,7 @@ const initialProducts: Product[] = [
     price: 55550,
     image_url: "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=600&h=600&fit=crop",
     is_featured: false,
+    is_active: true,
   },
   {
     id: "13",
@@ -116,6 +128,7 @@ const initialProducts: Product[] = [
     price: 43500,
     image_url: "https://images.unsplash.com/photo-1591561954557-26941169b49e?w=600&h=600&fit=crop",
     is_featured: true,
+    is_active: true,
   },
   {
     id: "14",
@@ -123,6 +136,7 @@ const initialProducts: Product[] = [
     price: 8400,
     image_url: "https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=600&h=600&fit=crop",
     is_featured: false,
+    is_active: true,
   },
   {
     id: "15",
@@ -130,6 +144,7 @@ const initialProducts: Product[] = [
     price: 5450,
     image_url: "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=600&h=600&fit=crop",
     is_featured: false,
+    is_active: true,
   },
   {
     id: "16",
@@ -137,6 +152,7 @@ const initialProducts: Product[] = [
     price: 18900,
     image_url: "https://images.unsplash.com/photo-1566150905458-1bf1fc113f0d?w=600&h=600&fit=crop",
     is_featured: false,
+    is_active: true,
   },
 ]
 
@@ -362,6 +378,7 @@ useEffect(() => {
           price: 21500,
           image_url: "https://images.unsplash.com/photo-1594223274512-ad4803739b7c?w=600&h=600&fit=crop",
           is_featured: false,
+          is_active: true,
         },
         {
           id: `${products.length + 2}`,
@@ -369,6 +386,7 @@ useEffect(() => {
           price: 4800,
           image_url: "https://images.unsplash.com/photo-1601924994987-69e26d50dc26?w=600&h=600&fit=crop",
           is_featured: false,
+          is_active: true,
         },
         {
           id: `${products.length + 3}`,
@@ -376,6 +394,7 @@ useEffect(() => {
           price: 28900,
           image_url: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&h=600&fit=crop",
           is_featured: false,
+          is_active: true,
         },
         {
           id: `${products.length + 4}`,
@@ -383,6 +402,7 @@ useEffect(() => {
           price: 8700,
           image_url: "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=600&h=600&fit=crop",
           is_featured: false,
+          is_active: true,
         },
       ]
       setProducts([...products, ...moreProducts])
