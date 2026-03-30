@@ -3,7 +3,7 @@
 
 import { useState } from "react"
 import Image from "next/image"
-import { Phone, MapPin, Sparkles, Plus, Minus, ShoppingBag, User, Search, Menu } from "lucide-react"
+import { Phone, MapPin, Sparkles } from "lucide-react"
 import {
   Accordion,
   AccordionContent,
@@ -56,43 +56,7 @@ export default function ProductDetailPage() {
   const [openAccordions, setOpenAccordions] = useState<string[]>(["product-details"])
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Announcement Bar */}
-      <div className="bg-foreground text-background text-center py-2 text-xs tracking-wide">
-        Duties have been included in the displayed pricing
-      </div>
-
-      {/* Header */}
-      <header className="border-b border-border/30">
-        <div className="flex items-center justify-between px-6 py-4">
-          <div className="flex items-center">
-            <button className="text-xs tracking-widest hover:opacity-70 transition-opacity">
-              Contact Us
-            </button>
-          </div>
-          
-          <div className="absolute left-1/2 -translate-x-1/2">
-            <h1 className="text-2xl tracking-[0.4em] font-light">MAISON</h1>
-          </div>
-
-          <nav className="flex items-center gap-6">
-            <button className="hover:opacity-70 transition-opacity">
-              <ShoppingBag className="w-5 h-5" strokeWidth={1.5} />
-            </button>
-            <button className="hover:opacity-70 transition-opacity">
-              <User className="w-5 h-5" strokeWidth={1.5} />
-            </button>
-            <button className="hover:opacity-70 transition-opacity">
-              <Search className="w-5 h-5" strokeWidth={1.5} />
-            </button>
-            <button className="flex items-center gap-2 hover:opacity-70 transition-opacity">
-              <Menu className="w-5 h-5" strokeWidth={1.5} />
-              <span className="text-xs tracking-widest">MENU</span>
-            </button>
-          </nav>
-        </div>
-      </header>
-
+    <div className="bg-background">
       {/* Editorial Gallery - Full Width 50/50 Split */}
       <section className="w-full">
         <div className="grid grid-cols-1 md:grid-cols-2">

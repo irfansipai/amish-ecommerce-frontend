@@ -61,16 +61,7 @@ export default function CheckoutPage() {
   }
 
   return (
-    <main className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="border-b border-zinc-200">
-        <div className="mx-auto max-w-7xl px-6 py-6">
-          <h1 className="text-center text-xs font-medium tracking-[0.3em] text-zinc-900">
-            SECURE CHECKOUT
-          </h1>
-        </div>
-      </header>
-
+    <div className="bg-white">
       {/* Main Content */}
       <div className="mx-auto max-w-7xl px-6 py-12 lg:py-16">
         <form onSubmit={handleSubmit}>
@@ -282,6 +273,6 @@ export default function CheckoutPage() {
           </div>
         </form>
       </div>
-    </main>
+    </div>
   )
 }

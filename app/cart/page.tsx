@@ -4,10 +4,6 @@
 import { useState } from "react"
 import Image from "next/image"
 import {
-  ShoppingBag,
-  User,
-  Search,
-  Menu,
   Plus,
   Printer,
   Heart,
@@ -87,42 +83,7 @@ export default function ShoppingBagPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="flex h-16 items-center justify-between px-6 lg:px-12">
-          {/* Left - Contact */}
-          <div className="flex items-center gap-2">
-            <Plus className="size-3" />
-            <span className="text-xs tracking-wide">Contact Us</span>
-          </div>
-
-          {/* Center - Logo */}
-          <div className="absolute left-1/2 -translate-x-1/2">
-            <h1 className="font-serif text-2xl tracking-[0.3em] font-normal">
-              LUXE
-            </h1>
-          </div>
-
-          {/* Right - Icons */}
-          <div className="flex items-center gap-6">
-            <button className="relative" aria-label="Shopping bag">
-              <ShoppingBag className="size-5" />
-            </button>
-            <button aria-label="Account">
-              <User className="size-5" />
-            </button>
-            <button aria-label="Search">
-              <Search className="size-5" />
-            </button>
-            <button className="flex items-center gap-2" aria-label="Menu">
-              <Menu className="size-5" />
-              <span className="text-xs tracking-wide">MENU</span>
-            </button>
-          </div>
-        </div>
-      </header>
-
+    <div className="bg-background">
       {/* Hero Banner */}
       <section className="relative h-[280px] w-full overflow-hidden">
         <div className="absolute inset-0 bg-fixed bg-cover bg-center bg-[url('https://images.unsplash.com/photo-1558618666-fcd25c85cd64?q=80&w=2832&auto=format&fit=crop')]">
@@ -142,7 +103,7 @@ export default function ShoppingBagPage() {
       </section>
 
       {/* Main Content */}
-      <main className="mx-auto max-w-7xl px-6 py-12 lg:px-12">
+      <div className="mx-auto max-w-7xl px-6 py-12 lg:px-12">
         <div className="grid gap-12 lg:grid-cols-12">
           {/* Left Column - Cart Items */}
           <div className="lg:col-span-8">
@@ -369,7 +330,7 @@ export default function ShoppingBagPage() {
             ))}
           </div>
         </section>
-      </main>
+      </div>
     </div>
   )
 }
