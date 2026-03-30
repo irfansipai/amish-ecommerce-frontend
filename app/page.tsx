@@ -1,3 +1,4 @@
+// frontend/app/page.tsx
 "use client"
 
 import { useState, useEffect } from "react"
@@ -56,63 +57,6 @@ const formatPrice = (price: number): string => {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0
   }).format(price)
-}
-
-// Navbar Component
-function Navbar() {
-  const [scrolled, setScrolled] = useState(false)
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 50)
-    }
-    window.addEventListener("scroll", handleScroll)
-    return () => window.removeEventListener("scroll", handleScroll)
-  }, [])
-
-  return (
-    <header 
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-        scrolled 
-          ? "bg-black/95 backdrop-blur-md border-b border-white/10" 
-          : "bg-transparent"
-      }`}
-    >
-      <nav className="flex items-center justify-between px-6 lg:px-12 py-4">
-        {/* Left Side */}
-        <div className="flex items-center gap-6">
-          <button className="flex items-center gap-2 text-white text-sm tracking-wider hover:opacity-70 transition-opacity">
-            <Plus className="size-4" />
-            <span className="hidden sm:inline">Contact Us</span>
-          </button>
-        </div>
-
-        {/* Center Logo */}
-        <Link href="/" className="absolute left-1/2 -translate-x-1/2">
-          <h1 className="font-serif text-2xl md:text-3xl font-light tracking-[0.3em] text-white">
-            MAISON
-          </h1>
-        </Link>
-
-        {/* Right Side */}
-        <div className="flex items-center gap-4 md:gap-6">
-          <button className="text-white hover:opacity-70 transition-opacity" aria-label="Gifts">
-            <Gift className="size-5" />
-          </button>
-          <button className="text-white hover:opacity-70 transition-opacity" aria-label="Account">
-            <User className="size-5" />
-          </button>
-          <button className="text-white hover:opacity-70 transition-opacity" aria-label="Search">
-            <Search className="size-5" />
-          </button>
-          <button className="flex items-center gap-2 text-white hover:opacity-70 transition-opacity">
-            <Menu className="size-5" />
-            <span className="hidden md:inline text-sm tracking-wider">MENU</span>
-          </button>
-        </div>
-      </nav>
-    </header>
-  )
 }
 
 // Hero Section Component
@@ -259,179 +203,14 @@ function CampaignSection() {
   )
 }
 
-// Footer Component
-function Footer() {
-  const [email, setEmail] = useState("")
-
-  const handleNewsletterSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    // Handle newsletter signup
-    console.log("Newsletter signup:", email)
-    setEmail("")
-  }
-
-  return (
-    <footer className="bg-black text-white">
-      {/* Main Footer Content */}
-      <div className="max-w-[1800px] mx-auto px-6 lg:px-12 py-16 lg:py-24">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8">
-          
-          {/* Column 1: Client Services */}
-          <div>
-            <h3 className="text-xs tracking-[0.2em] text-slate-400 mb-8">
-              MAY WE HELP YOU?
-            </h3>
-            <ul className="space-y-4">
-              {["Contact Us", "FAQs", "Email Unsubscribe", "Sitemap"].map((item) => (
-                <li key={item}>
-                  <Link 
-                    href="#" 
-                    className="text-sm text-white hover:text-slate-300 underline underline-offset-4 decoration-white/30 hover:decoration-white/60 transition-all"
-                  >
-                    {item}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-
-            <h3 className="text-xs tracking-[0.2em] text-slate-400 mt-12 mb-8">
-              MAISON SERVICES
-            </h3>
-            <ul className="space-y-4">
-              {["Discover Our Services", "Book an Appointment"].map((item) => (
-                <li key={item}>
-                  <Link 
-                    href="#" 
-                    className="text-sm text-white hover:text-slate-300 underline underline-offset-4 decoration-white/30 hover:decoration-white/60 transition-all"
-                  >
-                    {item}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Column 2: The Company */}
-          <div>
-            <h3 className="text-xs tracking-[0.2em] text-slate-400 mb-8">
-              THE COMPANY
-            </h3>
-            <ul className="space-y-4">
-              {[
-                "About Maison",
-                "Maison Equilibrium",
-                "Code of Ethics",
-                "Careers",
-                "Legal",
-                "Privacy Policy",
-                "Cookie Policy",
-                "Cookie Settings",
-                "Corporate Information",
-                "Vulnerability Disclosure Policy"
-              ].map((item) => (
-                <li key={item}>
-                  <Link 
-                    href="#" 
-                    className="text-sm text-white hover:text-slate-300 underline underline-offset-4 decoration-white/30 hover:decoration-white/60 transition-all"
-                  >
-                    {item}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Column 3: Store Locator & Newsletter */}
-          <div className="lg:col-span-2">
-            {/* Store Locator */}
-            <h3 className="text-xs tracking-[0.2em] text-slate-400 mb-6">
-              STORE LOCATOR
-            </h3>
-            <button className="w-full flex items-center justify-between py-4 border-b border-white/20 text-left hover:border-white/40 transition-colors group">
-              <span className="text-white/70 text-sm">Country/Region, City</span>
-              <ChevronRight className="size-5 text-white/50 group-hover:text-white transition-colors" />
-            </button>
-
-            {/* Newsletter Signup */}
-            <h3 className="text-xs tracking-[0.2em] text-slate-400 mt-12 mb-4">
-              SIGN UP FOR MAISON UPDATES
-            </h3>
-            <p className="text-xs text-white/60 mb-6 leading-relaxed">
-              By entering your email address below, you consent to receiving our newsletter with access to our latest collections, events and initiatives. More details on this are provided in our{" "}
-              <Link href="#" className="underline hover:text-white transition-colors">
-                Privacy Policy
-              </Link>
-            </p>
-            <form onSubmit={handleNewsletterSubmit} className="relative">
-              <Input
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-transparent border-0 border-b border-white/20 rounded-none px-0 py-4 text-white placeholder:text-white/50 focus-visible:ring-0 focus-visible:border-white"
-                required
-              />
-              <button 
-                type="submit" 
-                className="absolute right-0 top-1/2 -translate-y-1/2 text-white hover:opacity-70 transition-opacity"
-                aria-label="Subscribe"
-              >
-                <ArrowRight className="size-5" />
-              </button>
-            </form>
-
-            {/* Language & Region */}
-            <div className="grid grid-cols-2 gap-8 mt-12">
-              <div>
-                <h3 className="text-xs tracking-[0.2em] text-slate-400 mb-4">
-                  LANGUAGE
-                </h3>
-                <button className="flex items-center gap-2 text-sm text-white underline underline-offset-4 hover:opacity-70 transition-opacity">
-                  English
-                  <ChevronRight className="size-4 rotate-90" />
-                </button>
-              </div>
-              <div>
-                <h3 className="text-xs tracking-[0.2em] text-slate-400 mb-4">
-                  COUNTRY/REGION
-                </h3>
-                <Link href="#" className="text-sm text-white underline underline-offset-4 hover:opacity-70 transition-opacity">
-                  International Site
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Copyright Bar */}
-      <div className="border-t border-white/10 px-6 lg:px-12 py-8">
-        <div className="max-w-[1800px] mx-auto">
-          <p className="text-xs text-white/50">
-            © 2016 - 2026 Maison S.p.A. - All rights reserved.
-          </p>
-        </div>
-      </div>
-
-      {/* Large Brand Logo */}
-      <div className="overflow-hidden pb-8">
-        <h2 className="font-serif text-[20vw] font-light tracking-[0.1em] text-white/10 text-center whitespace-nowrap select-none">
-          MAISON
-        </h2>
-      </div>
-    </footer>
-  )
-}
 
 // Main Page Component
 export default function LuxuryHomePage() {
   return (
-    <main className="min-h-screen bg-white">
-      <Navbar />
+    <div className="bg-white">
       <HeroSection />
       <ProductGrid />
       <CampaignSection />
-      <Footer />
-    </main>
+    </div>
   )
 }

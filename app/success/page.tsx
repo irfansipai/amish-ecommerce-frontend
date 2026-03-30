@@ -1,3 +1,4 @@
+// frontend/app/success/page.tsx
 import Link from "next/link";
 import { CheckCircle } from "lucide-react";
 

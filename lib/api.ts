@@ -1,3 +1,4 @@
+// frontend/lib/api.ts
 import axios from "axios";
 
 // Create a custom axios instance connected to FastAPI backend
