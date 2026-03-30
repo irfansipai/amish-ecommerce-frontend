@@ -1,5 +1,5 @@
 // frontend/lib/api.ts
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 
 // Create a custom axios instance connected to FastAPI backend
 export const api = axios.create({
@@ -9,4 +9,42 @@ export const api = axios.create({
   },
 });
 
-// will add JWT Interceptor later!
+const TOKEN_STORAGE_KEY = "token";
+
+api.interceptors.request.use(
+  (config) => {
+    if (typeof window !== "undefined") {
+      const token = window.localStorage.getItem(TOKEN_STORAGE_KEY);
+
+      if (token) {
+        if (config.headers && typeof config.headers.set === "function") {
+          config.headers.set("Authorization", `Bearer ${token}`);
+        } else {
+          config.headers = {
+            ...config.headers,
+            Authorization: `Bearer ${token}`,
+          };
+        }
+      }
+    }
+
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+api.interceptors.response.use(
+  (response) => response,
+  (error: AxiosError) => {
+    console.error("API error:", error);
+
+    if (
+      error.response?.status === 401 &&
+      typeof window !== "undefined"
+    ) {
+      window.localStorage.removeItem(TOKEN_STORAGE_KEY);
+    }
+
+    return Promise.reject(error);
+  }
+);

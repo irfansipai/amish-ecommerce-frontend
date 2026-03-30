@@ -1,16 +1,61 @@
-// frontend/app/auth/page.tsx
 "use client";
 
 import { useState } from "react";
-import { Mail, Apple, ChevronRight } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { api } from "@/lib/api";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function AuthPage() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // We will connect this to FastAPI later
-    console.log("Submitting email:", email);
+    setLoading(true);
+    setError("");
+    setMessage("");
+
+    const formData = new FormData();
+    formData.append("username", email);
+    formData.append("password", password);
+
+    try {
+      const response = await api.post("/api/v1/auth/login", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      
+      localStorage.setItem("token", response.data.access_token);
+      router.push("/catalog");
+    } catch (err: any) {
+      setError(err.response?.data?.detail || "Invalid email or password.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+    setMessage("");
+
+    try {
+      await api.post("/api/v1/users/", { email, password });
+      setMessage("Account created! You can now log in.");
+      setPassword(""); // Clear password for safety
+    } catch (err: any) {
+      setError(err.response?.data?.detail || "Failed to create account.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSocialClick = () => {
+    alert("Social login is currently under construction. Please use email!");
   };
 
   return (
@@ -26,7 +71,10 @@ export default function AuthPage() {
       <div className="w-full max-w-md space-y-6">
         {/* SSO Buttons */}
         <div className="space-y-3">
-          <button className="w-full flex items-center justify-center gap-3 py-3 px-4 border border-zinc-300 text-sm font-medium text-zinc-900 hover:bg-zinc-50 transition-colors">
+          <button 
+            onClick={handleSocialClick}
+            className="w-full flex items-center justify-center gap-3 py-3 px-4 border border-zinc-300 text-sm font-medium text-zinc-900 hover:bg-zinc-50 transition-colors"
+          >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
               <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -36,9 +84,14 @@ export default function AuthPage() {
             CONTINUE WITH GOOGLE
           </button>
           
-          <button className="w-full flex items-center justify-center gap-3 py-3 px-4 border border-zinc-300 text-sm font-medium text-zinc-900 hover:bg-zinc-50 transition-colors">
-            <Apple className="w-5 h-5" />
-            CONTINUE WITH APPLE
+          <button 
+            onClick={handleSocialClick}
+            className="w-full flex items-center justify-center gap-3 py-3 px-4 border border-zinc-300 text-sm font-medium text-zinc-900 hover:bg-zinc-50 transition-colors"
+          >
+            <svg className="w-5 h-5 text-[#1877F2]" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.469h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.469h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+            </svg>
+            CONTINUE WITH FACEBOOK
           </button>
         </div>
 
@@ -52,34 +105,86 @@ export default function AuthPage() {
           </div>
         </div>
 
-        {/* Email Form */}
-        <div className="text-center mb-6">
-          <h2 className="text-lg font-normal tracking-wide text-zinc-900 mb-2">
-            CONTINUE WITH YOUR EMAIL ADDRESS
-          </h2>
-          <p className="text-sm text-zinc-600">
-            Sign in with your email and password or create a profile if you are new.
-          </p>
-        </div>
+        {/* Dynamic Auth Tabs */}
+        <Tabs defaultValue="login" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-6 bg-zinc-100 rounded-none p-1">
+            <TabsTrigger value="login" className="rounded-none uppercase tracking-widest text-xs font-bold data-[state=active]:bg-white data-[state=active]:text-zinc-900 data-[state=active]:shadow-sm">
+              Sign In
+            </TabsTrigger>
+            <TabsTrigger value="signup" className="rounded-none uppercase tracking-widest text-xs font-bold data-[state=active]:bg-white data-[state=active]:text-zinc-900 data-[state=active]:shadow-sm">
+              Create Account
+            </TabsTrigger>
+          </TabsList>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Email*"
-              required
-              className="w-full px-4 py-3 border border-zinc-300 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900 focus:border-zinc-900 transition-all"
-            />
-          </div>
-          <button
-            type="submit"
-            className="w-full bg-zinc-600 text-white py-4 text-sm font-medium tracking-widest uppercase hover:bg-zinc-800 transition-colors"
-          >
-            Continue
-          </button>
-        </form>
+          {error && <div className="p-3 mb-4 text-sm text-red-600 bg-red-50 border border-red-200">{error}</div>}
+          {message && <div className="p-3 mb-4 text-sm text-green-600 bg-green-50 border border-green-200">{message}</div>}
+
+          {/* LOGIN FORM */}
+          <TabsContent value="login">
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Email*"
+                  required
+                  className="w-full px-4 py-3 border border-zinc-300 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900 focus:border-zinc-900 transition-all"
+                />
+              </div>
+              <div>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Password*"
+                  required
+                  className="w-full px-4 py-3 border border-zinc-300 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900 focus:border-zinc-900 transition-all"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-zinc-900 text-white py-4 text-sm font-medium tracking-widest uppercase hover:bg-zinc-800 transition-colors disabled:opacity-50"
+              >
+                {loading ? "Authenticating..." : "Sign In"}
+              </button>
+            </form>
+          </TabsContent>
+
+          {/* SIGNUP FORM */}
+          <TabsContent value="signup">
+            <form onSubmit={handleSignup} className="space-y-4">
+              <div>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Email*"
+                  required
+                  className="w-full px-4 py-3 border border-zinc-300 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900 focus:border-zinc-900 transition-all"
+                />
+              </div>
+              <div>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Create Password*"
+                  required
+                  className="w-full px-4 py-3 border border-zinc-300 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900 focus:border-zinc-900 transition-all"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-zinc-900 text-white py-4 text-sm font-medium tracking-widest uppercase hover:bg-zinc-800 transition-colors disabled:opacity-50"
+              >
+                {loading ? "Creating Profile..." : "Join the Club"}
+              </button>
+            </form>
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Value Proposition Footer */}
