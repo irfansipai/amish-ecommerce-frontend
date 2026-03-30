@@ -80,11 +80,11 @@ function HeroSection() {
         <p className="font-serif text-white text-xl md:text-2xl italic mb-6 tracking-wide">
           Introducing the New Collection
         </p>
-        <Button 
-          className="bg-white text-black hover:bg-white/90 rounded-none px-10 py-6 text-sm tracking-[0.2em] font-medium"
-        >
-          SHOP NOW
-        </Button>
+        <Link href="/catalog">
+          <Button className="bg-white text-black hover:bg-white/90 rounded-none px-10 py-6 text-sm tracking-[0.2em] font-medium">
+            SHOP NOW
+          </Button>
+        </Link>
       </div>
     </section>
   )
@@ -163,12 +163,11 @@ function ProductGrid() {
 
         {/* View All CTA */}
         <div className="text-center mt-16">
-          <Button 
-            variant="outline"
-            className="rounded-none border-black text-black hover:bg-black hover:text-white px-12 py-6 text-sm tracking-[0.2em] font-medium transition-all duration-300"
-          >
-            VIEW ALL PRODUCTS
-          </Button>
+          <Link href="/catalog">
+            <Button variant="outline" className="rounded-none border-black text-black hover:bg-black hover:text-white px-12 py-6 text-sm tracking-[0.2em] font-medium transition-all duration-300">
+              VIEW ALL PRODUCTS
+            </Button>
+          </Link>
         </div>
       </div>
     </section>
@@ -193,11 +192,11 @@ function CampaignSection() {
         <h2 className="font-serif text-white text-3xl md:text-5xl font-light tracking-wider mb-6">
           Spring Summer 2026
         </h2>
-        <Button 
-          className="bg-white text-black hover:bg-white/90 rounded-none px-10 py-6 text-sm tracking-[0.2em] font-medium"
-        >
-          SHOP NOW
-        </Button>
+        <Link href="/catalog">
+          <Button className="bg-white text-black hover:bg-white/90 rounded-none px-10 py-6 text-sm tracking-[0.2em] font-medium">
+            SHOP NOW
+          </Button>
+        </Link>
       </div>
     </section>
   )

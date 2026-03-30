@@ -3,6 +3,7 @@
 
 import {useEffect, useState } from "react"
 import { api } from "@/lib/api";
+import Link from "next/link";
 import Image from "next/image"
 import { SlidersHorizontal } from "lucide-react"
 import {
@@ -179,37 +180,42 @@ function formatPrice(price: number): string {
 
 function ProductCard({ product }: { product: Product }) {
   return (
-    <article
-      className={`group cursor-pointer ${
-        product.is_featured ? "col-span-1 md:col-span-2 xl:col-span-2" : "col-span-1"
-      }`}
+    <Link 
+      href={`/product/${product.id}`} 
+      className={`group cursor-pointer ${product.is_featured ? "col-span-1 md:col-span-2 xl:col-span-2" : "col-span-1"}`}
     >
-      <div className="relative aspect-square overflow-hidden bg-neutral-50">
-        <Image
-          src={product.image_url}
-          alt={product.name}
-          fill
-          className="object-cover transition-transform duration-500 group-hover:scale-105"
-          sizes={product.is_featured ? "(max-width: 768px) 100vw, 50vw" : "(max-width: 768px) 100vw, 25vw"}
-        />
-        {product.is_featured && (
-          <div className="absolute bottom-4 left-4">
-            <span className="text-[10px] tracking-widest text-foreground/80 underline underline-offset-2 cursor-pointer hover:text-foreground transition-colors">
-              Shop Now Women&apos;s Shoes
-            </span>
-          </div>
-        )}
-      </div>
-      <div className="pt-3 pb-6">
-        <p className="text-[10px] tracking-wide text-muted-foreground mb-1">
-          See More. Buy Now
-        </p>
-        <h3 className="text-xs font-normal tracking-wide text-foreground leading-tight mb-1">
-          {product.name}
-        </h3>
-        <p className="text-xs text-foreground/80">{formatPrice(product.price)}</p>
-      </div>
-    </article>
+      <article
+        className={`group cursor-pointer ${
+          product.is_featured ? "col-span-1 md:col-span-2 xl:col-span-2" : "col-span-1"
+        }`}
+      >
+        <div className="relative aspect-square overflow-hidden bg-neutral-50">
+          <Image
+            src={product.image_url}
+            alt={product.name}
+            fill
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
+            sizes={product.is_featured ? "(max-width: 768px) 100vw, 50vw" : "(max-width: 768px) 100vw, 25vw"}
+          />
+          {product.is_featured && (
+            <div className="absolute bottom-4 left-4">
+              <span className="text-[10px] tracking-widest text-foreground/80 underline underline-offset-2 cursor-pointer hover:text-foreground transition-colors">
+                Shop Now Women&apos;s Shoes
+              </span>
+            </div>
+          )}
+        </div>
+        <div className="pt-3 pb-6">
+          <p className="text-[10px] tracking-wide text-muted-foreground mb-1">
+            See More. Buy Now
+          </p>
+          <h3 className="text-xs font-normal tracking-wide text-foreground leading-tight mb-1">
+            {product.name}
+          </h3>
+          <p className="text-xs text-foreground/80">{formatPrice(product.price)}</p>
+        </div>
+      </article>
+    </Link>
   )
 }
 

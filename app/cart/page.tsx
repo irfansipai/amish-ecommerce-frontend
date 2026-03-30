@@ -3,6 +3,7 @@
 
 import { useState } from "react"
 import Image from "next/image"
+import Link from "next/link";
 import {
   Plus,
   Printer,
@@ -252,9 +253,11 @@ export default function ShoppingBagPage() {
                 </p>
 
                 {/* Checkout Button */}
-                <Button className="mt-6 w-full h-12 rounded-none bg-foreground text-background text-xs tracking-[0.2em] uppercase hover:bg-foreground/90">
-                  Checkout
-                </Button>
+                <Link href="/checkout" className="w-full mt-6 block">
+                  <Button className="mt-6 w-full h-12 rounded-none bg-foreground text-background text-xs tracking-[0.2em] uppercase hover:bg-foreground/90">
+                    Checkout
+                  </Button>
+                </Link>
               </div>
 
               {/* Help Section */}
