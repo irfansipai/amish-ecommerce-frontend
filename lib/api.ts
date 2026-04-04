@@ -1,5 +1,5 @@
 // frontend/lib/api.ts
-import axios, { AxiosError } from "axios";
+import axios, { AxiosError, AxiosHeaders } from "axios";
 
 // Create a custom axios instance connected to FastAPI backend
 export const api = axios.create({
@@ -17,14 +17,11 @@ api.interceptors.request.use(
       const token = window.localStorage.getItem(TOKEN_STORAGE_KEY);
 
       if (token) {
-        if (config.headers && typeof config.headers.set === "function") {
-          config.headers.set("Authorization", `Bearer ${token}`);
-        } else {
-          config.headers = {
-            ...config.headers,
-            Authorization: `Bearer ${token}`,
-          };
+        if (!config.headers) {
+          config.headers = new AxiosHeaders();
         }
+
+        config.headers.set("Authorization", `Bearer ${token}`);
       }
     }
 

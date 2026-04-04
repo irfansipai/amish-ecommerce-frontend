@@ -5,6 +5,7 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import { CartProvider } from "@/context/CartContext";
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 
@@ -27,11 +28,13 @@ export default function RootLayout({
       className={cn("h-full", "antialiased", geistSans.variable, geistMono.variable, "font-sans", inter.variable)}
     >
       <body className="min-h-full flex flex-col">
-        <Navbar />
-        {/* Added padding-top to prevent content from hiding behind the fixed navbar */}
-        <main className="flex-1 pt-[72px]"> 
-          {children}
-        </main>
+        <CartProvider>
+          <Navbar />
+          {/* Added padding-top to prevent content from hiding behind the fixed navbar */}
+          <main className="flex-1 pt-[72px]">
+            {children}
+          </main>
+        </CartProvider>
         <Footer />
       </body>
     </html>

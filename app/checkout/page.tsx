@@ -1,30 +1,16 @@
 // frontend/app/checkout/page.tsx
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Image from "next/image"
+import { useRouter } from "next/navigation"
 import { Package, CreditCard, ShieldCheck } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Separator } from "@/components/ui/separator"
-
-const orderItems = [
-  {
-    id: 1,
-    name: "LEATHER MOTO JACKET",
-    description: "Premium Italian Leather / Black",
-    price: 189000,
-    image: "/products/jacket.jpg",
-  },
-  {
-    id: 2,
-    name: "CHRONOGRAPH SILVER WATCH",
-    description: "Swiss Movement / 42mm",
-    price: 245000,
-    image: "/products/watch.jpg",
-  },
-]
+import { useCart } from "@/context/CartContext"
+import { api } from "@/lib/api"
 
 function formatINR(amount: number) {
   return new Intl.NumberFormat("en-IN", {
@@ -34,30 +20,101 @@ function formatINR(amount: number) {
   }).format(amount)
 }
 
+function normalizePrice(price: number | string) {
+  return typeof price === "number" ? price : Number.parseFloat(price)
+}
+
 export default function CheckoutPage() {
+  const { cartItems, clearCart, cartTotal, isLoading } = useCart()
+  const router = useRouter()
   const [formData, setFormData] = useState({
-    firstName: "Irfan",
-    lastName: "Sipai",
-    email: "ee.irfansmail@gmail.com",
+    firstName: "",
+    lastName: "",
+    email: "",
     address: "",
-    city: "Rajkot",
-    state: "Gujarat",
+    addressLine2: "",
+    city: "",
+    state: "",
     pincode: "",
     phone: "",
   })
+  const [errorMessage, setErrorMessage] = useState("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  useEffect(() => {
+    if (isLoading) {
+      return
+    }
+
+    if (cartItems.length === 0) {
+      router.push("/cart")
+    }
+  }, [cartItems, isLoading, router])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
-  const subtotal = orderItems.reduce((acc, item) => acc + item.price, 0)
+  const subtotal = cartTotal
   const shipping = 0
   const total = subtotal + shipping
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log("Order placed:", { formData, orderItems, total })
+    setErrorMessage("")
+    setIsSubmitting(true)
+
+    const payload = {
+      shipping_address_line_1: formData.address,
+      shipping_address_line_2: formData.addressLine2,
+      shipping_city: formData.city,
+      shipping_state: formData.state,
+      shipping_pincode: formData.pincode,
+      shipping_country: "India",
+    }
+
+    const idempotencyKey = crypto.randomUUID()
+
+    try {
+      await api.post("/api/v1/orders/checkout", payload, {
+        headers: {
+          "Idempotency-Key": idempotencyKey,
+        },
+      })
+
+      // The backend has successfully created the order and wiped the database cart.
+      // We try to clear the frontend context, but we ignore any 404 errors 
+      // because we already know the backend deleted the items!
+      try {
+        await clearCart()
+      } catch (clearError) {
+        console.log("Cart already cleared by backend.")
+      }
+
+      // Hard redirect to success page to ensure all fresh data is loaded
+      window.location.href = "/success"
+      
+    } catch (error: any) {
+      console.error("Checkout failed:", error)
+      
+      const status = error.response?.status
+      const detail = error.response?.data?.detail
+
+      if (status === 422) {
+        setErrorMessage("Please fill out all required shipping fields completely.")
+      } else if (status === 400 || status === 409) {
+        setErrorMessage(detail || "Payment failed or inventory unavailable.")
+      } else {
+        setErrorMessage("A network error occurred. Please try again.")
+      }
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  if (isLoading || cartItems.length === 0) {
+    return null
   }
 
   return (
@@ -147,6 +204,19 @@ export default function CheckoutPage() {
                   />
                 </Field>
 
+                <Field>
+                  <FieldLabel className="text-[10px] font-normal tracking-[0.15em] text-zinc-500 uppercase mb-2">
+                    Address Line 2
+                  </FieldLabel>
+                  <Input
+                    name="addressLine2"
+                    value={formData.addressLine2}
+                    onChange={handleChange}
+                    placeholder="Enter your shipping address"
+                    className="h-12 rounded-none border-zinc-200 bg-zinc-50/50 text-sm focus-visible:border-zinc-900 focus-visible:ring-0"
+                  />
+                </Field>
+
                 {/* City & State Row */}
                 <div className="grid gap-6 sm:grid-cols-2">
                   <Field>
@@ -201,11 +271,11 @@ export default function CheckoutPage() {
 
                 {/* Order Items */}
                 <div className="space-y-6">
-                  {orderItems.map((item) => (
+                  {cartItems.map((item) => (
                     <div key={item.id} className="flex gap-5">
                       <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden bg-zinc-100">
                         <Image
-                          src={item.image}
+                          src={item.image_url ?? "/placeholder.svg?height=160&width=160"}
                           alt={item.name}
                           fill
                           className="object-cover"
@@ -216,10 +286,10 @@ export default function CheckoutPage() {
                           {item.name}
                         </h3>
                         <p className="mt-1 text-[10px] tracking-wide text-zinc-500">
-                          {item.description}
+                          Size {item.size ?? "One Size"} / {item.variant ?? "Default"}
                         </p>
                         <p className="mt-2 text-sm font-medium text-zinc-900">
-                          {formatINR(item.price)}
+                          {formatINR(normalizePrice(item.price) * item.quantity)}
                         </p>
                       </div>
                     </div>
@@ -253,12 +323,17 @@ export default function CheckoutPage() {
                   </div>
                 </div>
 
+                {errorMessage ? (
+                  <p className="mt-6 text-sm text-red-600">{errorMessage}</p>
+                ) : null}
+
                 {/* Place Order Button */}
                 <Button
                   type="submit"
+                  disabled={isSubmitting}
                   className="mt-10 h-14 w-full rounded-none bg-zinc-900 text-xs font-medium tracking-[0.2em] text-white hover:bg-zinc-800"
                 >
-                  PLACE ORDER
+                  {isSubmitting ? "PROCESSING..." : "PLACE ORDER"}
                 </Button>
 
                 {/* Trust Badge */}

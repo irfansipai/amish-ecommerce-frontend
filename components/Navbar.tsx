@@ -4,9 +4,11 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Menu, Search, ShoppingBag, User, Gift, Plus } from "lucide-react"
+import { useCart } from "@/context/CartContext"
 
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false)
+  const { cartCount } = useCart()
 
   useEffect(() => {
     const handleScroll = () => {
@@ -51,8 +53,17 @@ export function Navbar() {
           <button className="text-white hover:opacity-70 transition-opacity" aria-label="Search">
             <Search className="size-5" />
           </button>
-          <Link href="/cart" className="text-white hover:opacity-70 transition-opacity" aria-label="Cart">
-             <ShoppingBag className="size-5" />
+          <Link
+            href="/cart"
+            className="relative text-white hover:opacity-70 transition-opacity"
+            aria-label="Cart"
+          >
+            <ShoppingBag className="size-5" />
+            {cartCount > 0 && (
+              <span className="absolute -right-2 -top-2 flex min-h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-medium leading-none text-white">
+                {cartCount}
+              </span>
+            )}
           </Link>
           <button className="flex items-center gap-2 text-white hover:opacity-70 transition-opacity">
             <Menu className="size-5" />

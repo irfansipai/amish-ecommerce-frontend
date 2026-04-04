@@ -1,9 +1,12 @@
 // frontend/app/product/[id]/page.tsx
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Image from "next/image"
+import { useParams } from "next/navigation"
 import { Phone, MapPin, Sparkles } from "lucide-react"
+import { useCart } from "@/context/CartContext"
+import { api } from "@/lib/api"
 import {
   Accordion,
   AccordionContent,
@@ -11,25 +14,26 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion"
 
-// TypeScript Interface
 interface Product {
   id: string
   name: string
-  price: number
-  description: string
-  images: string[]
+  description: string | null
+  price: string
+  sku: string
+  stock: number
+  is_active: boolean
+  image_url: string | null
 }
 
-// Sample Product Data
-const product: Product = {
-  id: "87A158-XNBOW-1060",
-  name: "Leather biker jacket with Web detail",
-  price: 1200,
-  description: "This style is part of the Gucci Primavera collection. Biker inspirations are reinterpreted with leather Web detail along the sleeves on this regular-fit jacket. Crafted from treated calf leather with subtly worn-out effect, the style features intentional creases for a lived-in appearance. Special finishings and a softened grain complete the distinctive design.",
-  images: [
-    "/placeholder.svg?height=800&width=600",
-    "/placeholder.svg?height=800&width=600"
-  ]
+interface ProductState {
+  id: string
+  name: string
+  description: string
+  price: string
+  sku: string
+  stock: number
+  is_active: boolean
+  image_url: string
 }
 
 const productDetails = [
@@ -52,8 +56,79 @@ const productDetails = [
   "Pocket lining: 100% Cotton"
 ]
 
+const availableSizes = ["44", "46", "48", "50", "52", "54", "56"]
+
 export default function ProductDetailPage() {
+  const params = useParams<{ id: string }>()
   const [openAccordions, setOpenAccordions] = useState<string[]>(["product-details"])
+  const [selectedSize, setSelectedSize] = useState(availableSizes[0])
+  const [product, setProduct] = useState<ProductState | null>(null)
+  const [loading, setLoading] = useState(true)
+  const { addToCart } = useCart()
+
+  useEffect(() => {
+    const productId = params?.id
+
+    if (!productId) {
+      setLoading(false)
+      return
+    }
+
+    const fetchProduct = async () => {
+      setLoading(true)
+
+      try {
+        const response = await api.get<Product>(`/api/v1/products/${productId}`)
+        const data = response.data
+
+        setProduct({
+          ...data,
+          description: data.description || "No description available.",
+          image_url:
+            data.image_url ||
+            "/placeholder.svg?height=800&width=600",
+        })
+      } catch (error) {
+        console.error("Failed to fetch product:", error)
+        setProduct(null)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchProduct()
+  }, [params])
+
+  const handleAddToCart = () => {
+    if (!product) {
+      return
+    }
+
+    addToCart({
+      product_id: product.id,
+      quantity: 1,
+      size: selectedSize,
+      variant: "Default",
+    })
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <p className="text-sm tracking-widest uppercase text-muted-foreground animate-pulse">
+          Loading details...
+        </p>
+      </div>
+    )
+  }
+
+  if (!product) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <p className="text-sm tracking-wide text-muted-foreground">Product not found</p>
+      </div>
+    )
+  }
 
   return (
     <div className="bg-background">
@@ -62,7 +137,7 @@ export default function ProductDetailPage() {
         <div className="grid grid-cols-1 md:grid-cols-2">
           <div className="relative aspect-[3/4] bg-neutral-100">
             <Image
-              src={product.images[0]}
+              src={product.image_url}
               alt={`${product.name} - View 1`}
               fill
               className="object-cover"
@@ -71,7 +146,7 @@ export default function ProductDetailPage() {
           </div>
           <div className="relative aspect-[3/4] bg-neutral-100">
             <Image
-              src={product.images[1]}
+              src={product.image_url}
               alt={`${product.name} - View 2`}
               fill
               className="object-cover"
@@ -99,7 +174,7 @@ export default function ProductDetailPage() {
             
             {/* Price */}
             <p className="text-base font-light tracking-wide mb-8">
-              ${product.price.toLocaleString()}
+              {product.price}
             </p>
 
             {/* Size Accordion */}
@@ -115,10 +190,16 @@ export default function ProductDetailPage() {
                 </AccordionTrigger>
                 <AccordionContent>
                   <div className="grid grid-cols-4 gap-2 pb-2">
-                    {["44", "46", "48", "50", "52", "54", "56"].map((size) => (
+                    {availableSizes.map((size) => (
                       <button
                         key={size}
-                        className="border border-border/60 py-3 text-sm hover:border-foreground transition-colors"
+                        type="button"
+                        onClick={() => setSelectedSize(size)}
+                        className={`border py-3 text-sm transition-colors ${
+                          selectedSize === size
+                            ? "border-foreground bg-foreground text-background"
+                            : "border-border/60 hover:border-foreground"
+                        }`}
                       >
                         {size}
                       </button>
@@ -134,7 +215,7 @@ export default function ProductDetailPage() {
                 PRODUCT DESCRIPTION
               </h3>
               <p className="text-[11px] text-muted-foreground tracking-wide mb-4">
-                Style {product.id}
+                Style {product.sku}
               </p>
               <p className="text-sm font-light leading-relaxed text-foreground/90">
                 {product.description}
@@ -188,8 +269,12 @@ export default function ProductDetailPage() {
               </p>
 
               {/* CTA Button */}
-              <button className="w-full bg-foreground text-background py-4 text-sm tracking-[0.2em] font-medium hover:bg-foreground/90 transition-colors">
-                SELECT SIZE
+              <button
+                type="button"
+                onClick={handleAddToCart}
+                className="w-full bg-foreground text-background py-4 text-sm tracking-[0.2em] font-medium hover:bg-foreground/90 transition-colors"
+              >
+                ADD TO BAG
               </button>
 
               {/* Utility Links */}
