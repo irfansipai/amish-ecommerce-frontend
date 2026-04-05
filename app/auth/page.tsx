@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function AuthPage() {
   const router = useRouter();
+  const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -19,17 +21,9 @@ export default function AuthPage() {
     setError("");
     setMessage("");
 
-    const formData = new FormData();
-    formData.append("username", email);
-    formData.append("password", password);
-
     try {
-      const response = await api.post("/api/v1/auth/login", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      
-      localStorage.setItem("token", response.data.access_token);
-      router.push("/catalog");
+      await login(email, password);
+      // AuthContext handles redirect to /account
     } catch (err: any) {
       setError(err.response?.data?.detail || "Invalid email or password.");
     } finally {
@@ -46,7 +40,7 @@ export default function AuthPage() {
     try {
       await api.post("/api/v1/users/", { email, password });
       setMessage("Account created! You can now log in.");
-      setPassword(""); // Clear password for safety
+      setPassword("");
     } catch (err: any) {
       setError(err.response?.data?.detail || "Failed to create account.");
     } finally {
@@ -71,7 +65,7 @@ export default function AuthPage() {
       <div className="w-full max-w-md space-y-6">
         {/* SSO Buttons */}
         <div className="space-y-3">
-          <button 
+          <button
             onClick={handleSocialClick}
             className="w-full flex items-center justify-center gap-3 py-3 px-4 border border-zinc-300 text-sm font-medium text-zinc-900 hover:bg-zinc-50 transition-colors"
           >
@@ -84,7 +78,7 @@ export default function AuthPage() {
             CONTINUE WITH GOOGLE
           </button>
           
-          <button 
+          <button
             onClick={handleSocialClick}
             className="w-full flex items-center justify-center gap-3 py-3 px-4 border border-zinc-300 text-sm font-medium text-zinc-900 hover:bg-zinc-50 transition-colors"
           >

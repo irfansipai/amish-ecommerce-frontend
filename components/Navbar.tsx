@@ -5,9 +5,15 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Menu, Search, ShoppingBag, User, Gift, Plus } from "lucide-react"
 import { useCart } from "@/context/CartContext"
+import { useAuth } from "@/context/AuthContext"
+
+function generateAvatar(email: string) {
+  return email.charAt(0).toUpperCase()
+}
 
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false)
+  const { user, isLoading } = useAuth()
   const { cartCount } = useCart()
 
   useEffect(() => {
@@ -18,12 +24,14 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
+  const isLoggedIn = !!user
+
   return (
-    <header 
+    <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-        scrolled 
-          ? "bg-black/95 backdrop-blur-md border-b border-white/10" 
-          : "bg-black/80 backdrop-blur-sm" // Ensures visibility on all pages
+        scrolled
+          ? "bg-black/95 backdrop-blur-md border-b border-white/10"
+          : "bg-black/80 backdrop-blur-sm"
       }`}
     >
       <nav className="flex items-center justify-between px-6 lg:px-12 py-4">
@@ -47,8 +55,20 @@ export function Navbar() {
           <button className="text-white hover:opacity-70 transition-opacity" aria-label="Gifts">
             <Gift className="size-5" />
           </button>
-          <Link href="/auth" className="text-white hover:opacity-70 transition-opacity" aria-label="Account">
-            <User className="size-5" />
+          <Link
+            href={isLoggedIn ? "/account" : "/auth"}
+            className="text-white hover:opacity-70 transition-opacity"
+            aria-label="Account"
+          >
+            {isLoading ? (
+              <User className="size-5" />
+            ) : isLoggedIn && user ? (
+              <div className="h-6 w-6 rounded-full bg-zinc-900 text-white flex items-center justify-center text-xs font-medium">
+                {generateAvatar(user.email)}
+              </div>
+            ) : (
+              <User className="size-5" />
+            )}
           </Link>
           <button className="text-white hover:opacity-70 transition-opacity" aria-label="Search">
             <Search className="size-5" />

@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { CartProvider } from "@/context/CartContext";
+import { AuthProvider } from "@/context/AuthContext";
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 
@@ -28,13 +29,15 @@ export default function RootLayout({
       className={cn("h-full", "antialiased", geistSans.variable, geistMono.variable, "font-sans", inter.variable)}
     >
       <body className="min-h-full flex flex-col">
-        <CartProvider>
-          <Navbar />
-          {/* Added padding-top to prevent content from hiding behind the fixed navbar */}
-          <main className="flex-1 pt-[72px]">
-            {children}
-          </main>
-        </CartProvider>
+        <AuthProvider>
+          <CartProvider>
+            <Navbar />
+            {/* Added padding-top to prevent content from hiding behind the fixed navbar */}
+            <main className="flex-1 pt-[72px]">
+              {children}
+            </main>
+          </CartProvider>
+        </AuthProvider>
         <Footer />
       </body>
     </html>
