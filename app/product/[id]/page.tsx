@@ -16,6 +16,12 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  type CarouselApi,
+} from "@/components/ui/carousel";
 
 interface Product {
   id: string;
@@ -72,6 +78,21 @@ export default function ProductDetailPage() {
   const { addToCart } = useCart();
   const { user } = useAuth();
   const router = useRouter();
+
+  const [carouselApi, setCarouselApi] = useState<CarouselApi>();
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  useEffect(() => {
+    if (!carouselApi) {
+      return;
+    }
+
+    setCurrentSlide(carouselApi.selectedScrollSnap());
+
+    carouselApi.on("select", () => {
+      setCurrentSlide(carouselApi.selectedScrollSnap());
+    });
+  }, [carouselApi]);
 
   useEffect(() => {
     const productId = params?.id;
@@ -148,29 +169,47 @@ export default function ProductDetailPage() {
     );
   }
 
+  const displayImages = [product.image_url, product.image_url, product.image_url];
+
   return (
     <div className="bg-background">
-      {/* Editorial Gallery - Full Width 50/50 Split */}
-      <section className="w-full">
-        <div className="grid grid-cols-1 md:grid-cols-2">
-          <div className="relative aspect-[3/4] bg-neutral-100">
-            <Image
-              src={product.image_url}
-              alt={`${product.name} - View 1`}
-              fill
-              className="object-cover"
-              priority
+      {/* Editorial Gallery */}
+      <section className="w-full relative group">
+        <Carousel
+          setApi={setCarouselApi}
+          opts={{
+            loop: true,
+          }}
+          className="w-full"
+        >
+          <CarouselContent className="ml-0">
+            {displayImages.map((imgUrl, index) => (
+              <CarouselItem key={index} className="pl-0 basis-full lg:basis-1/2 border-r border-white/10">
+                <div className="relative w-full aspect-[3/4] md:h-[80vh] bg-neutral-100">
+                  <Image
+                    src={imgUrl}
+                    alt={`${product.name} - View ${index + 1}`}
+                    fill
+                    className="object-cover"
+                    priority={index === 0}
+                  />
+                </div>
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+        </Carousel>
+
+        {/* Custom Minimalist Indicator */}
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-10 mix-blend-difference">
+          {displayImages.map((_, index) => (
+            <div
+              key={index}
+              className={`h-[2px] transition-all duration-500 ease-in-out ${currentSlide === index
+                ? "w-8 bg-white"
+                : "w-4 bg-white/50"
+                }`}
             />
-          </div>
-          <div className="relative aspect-[3/4] bg-neutral-100">
-            <Image
-              src={product.image_url}
-              alt={`${product.name} - View 2`}
-              fill
-              className="object-cover"
-              priority
-            />
-          </div>
+          ))}
         </div>
       </section>
 
@@ -212,11 +251,10 @@ export default function ProductDetailPage() {
                         key={size}
                         type="button"
                         onClick={() => setSelectedSize(size)}
-                        className={`border py-3 text-sm transition-colors ${
-                          selectedSize === size
-                            ? "border-foreground bg-foreground text-background"
-                            : "border-border/60 hover:border-foreground"
-                        }`}
+                        className={`border py-3 text-sm transition-colors ${selectedSize === size
+                          ? "border-foreground bg-foreground text-background"
+                          : "border-border/60 hover:border-foreground"
+                          }`}
                       >
                         {size}
                       </button>
