@@ -1,3 +1,4 @@
+// context/CartContext.tsx
 "use client";
 
 import {
@@ -107,14 +108,27 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const addToCart = async (item: AddToCartItem) => {
-    await api.post("/api/v1/carts/items", {
-      product_id: item.product_id,
-      quantity: item.quantity,
-      size: item.size,
-      variant: item.variant,
-    });
+    if (!localStorage.getItem("token")) {
+      console.warn("Attempted to add to cart without authentication.");
+      return;
+    }
 
-    await syncCart();
+    try {
+      await api.post("/api/v1/carts/items", {
+        product_id: item.product_id,
+        quantity: item.quantity,
+        size: item.size,
+        variant: item.variant,
+      });
+
+      await syncCart();
+    } catch (error: any) {
+      if (error.response?.status === 401) {
+        console.warn("Authentication required to add item to cart.");
+        return;
+      }
+      console.error("Failed to add item to cart:", error);
+    }
   };
 
   const removeFromCart = async (id: string) => {

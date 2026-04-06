@@ -2,11 +2,12 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { usePathname } from "next/navigation" // 1. Import usePathname
+import { usePathname, useRouter } from "next/navigation" // 1. Import usePathname
 import Link from "next/link"
 import { Menu, Search, ShoppingBag, User, Gift, Plus } from "lucide-react"
 import { useCart } from "@/context/CartContext"
 import { useAuth } from "@/context/AuthContext"
+import { toast } from "sonner"
 
 function generateAvatar(email: string) {
   return email.charAt(0).toUpperCase()
@@ -15,6 +16,7 @@ function generateAvatar(email: string) {
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const pathname = usePathname() // 2. Get the current URL path
+  const router = useRouter()
 
   const { user, isLoading } = useAuth()
   const { cartCount } = useCart()
@@ -86,8 +88,18 @@ export function Navbar() {
             <button className="text-white hover:opacity-70 transition-opacity" aria-label="Search">
               <Search className="size-5" />
             </button>
-            <Link
-              href="/cart"
+            <button
+              type="button"
+              onClick={() => {
+                if (!user) {
+                  toast.error("Authentication Required", {
+                    description: "Please sign in to view your bag.",
+                  });
+                  router.push("/auth")
+                } else {
+                  router.push("/cart")
+                }
+              }}
               className="relative text-white hover:opacity-70 transition-opacity"
               aria-label="Cart"
             >
@@ -97,7 +109,7 @@ export function Navbar() {
                   {cartCount}
                 </span>
               )}
-            </Link>
+            </button>
             <button className="flex items-center gap-2 text-white hover:opacity-70 transition-opacity">
               <Menu className="size-5" />
               <span className="hidden md:inline text-sm tracking-wider">MENU</span>

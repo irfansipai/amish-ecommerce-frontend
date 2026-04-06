@@ -1,40 +1,43 @@
-// frontend/app/cart/page.tsx
+// app/cart/page.tsx
 "use client"
 
 import Image from "next/image"
 import Link from "next/link"
-import {
-  Plus,
-  Printer,
-  Heart,
-  Phone,
-  Mail,
-} from "lucide-react"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion"
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { Plus, Printer, Heart, Phone, Mail } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Button } from "@/components/ui/button"
 import { useCart, type CartItem } from "@/context/CartContext"
+import { useAuth } from "@/context/AuthContext"
 
 // Format price with Korean Won
 const formatPrice = (price: number) => {
-  return `KR ${price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).replace(/,/g, ".")}`
+  return `KR ${price
+    .toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    .replace(/,/g, ".")}`
 }
 
 const normalizePrice = (price: number | string) =>
   typeof price === "number" ? price : Number.parseFloat(price)
 
 export default function ShoppingBagPage() {
+  const { user } = useAuth()
+  const router = useRouter()
+
+  // Redirect unauthenticated users to /auth
+  useEffect(() => {
+    if (!user) {
+      router.push("/auth")
+    }
+  }, [user, router])
+
+  // If not authenticated, render nothing while redirecting
+  if (!user) {
+    return null
+  }
+
   const { cartItems, updateQuantity, removeFromCart, isLoading } = useCart()
 
   // Calculate totals
@@ -45,11 +48,12 @@ export default function ShoppingBagPage() {
   const vatRate = 0.2
   const vat = subtotal * vatRate
   const total = subtotal
+
   const isEmpty = !isLoading && cartItems.length === 0
-  const getItemStyle = (item: CartItem) =>{
-    // (item as CartItem & { style?: string }).style ?? item.product_id
-  return item.product_id.split('-')[0].toUpperCase()
+  const getItemStyle = (item: CartItem) => {
+    return item.product_id.split("-")[0].toUpperCase()
   }
+
   return (
     <div className="bg-background">
       {/* Hero Banner */}
@@ -212,15 +216,11 @@ export default function ShoppingBagPage() {
                       <span className="text-sm font-medium uppercase tracking-wide">
                         Total
                       </span>
-                      <span className="text-lg font-normal">
-                        {formatPrice(total)}
-                      </span>
+                      <span className="text-lg font-normal">{formatPrice(total)}</span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">VAT (Included)</span>
-                      <span className="text-muted-foreground">
-                        {formatPrice(vat)}
-                      </span>
+                      <span className="text-muted-foreground">{formatPrice(vat)}</span>
                     </div>
                   </div>
 
@@ -301,24 +301,6 @@ export default function ShoppingBagPage() {
             </div>
           </div>
         )}
-
-        {/* You May Also Like Section */}
-        <section className="mt-20 border-t pt-12">
-          <h3 className="text-center text-xs font-medium tracking-[0.2em] uppercase">
-            You May Also Like
-          </h3>
-          <div className="mt-8 grid grid-cols-2 gap-6 md:grid-cols-4">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="group">
-                <div className="aspect-[3/4] bg-muted transition-opacity group-hover:opacity-90" />
-                <div className="mt-4 space-y-1">
-                  <p className="text-xs text-muted-foreground">Product Name</p>
-                  <p className="text-sm">KR 12.000,00</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
       </div>
     </div>
   )

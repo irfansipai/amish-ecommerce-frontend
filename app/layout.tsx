@@ -7,6 +7,7 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { CartProvider } from "@/context/CartContext";
 import { AuthProvider } from "@/context/AuthContext";
+import { Toaster } from "@/components/ui/sonner";
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 
@@ -29,15 +30,16 @@ export default function RootLayout({
       className={cn("h-full", "antialiased", geistSans.variable, geistMono.variable, "font-sans", inter.variable)}
     >
       <body className="min-h-full flex flex-col">
-        <AuthProvider>
-          <CartProvider>
-            <Navbar />
-            <main className="flex-1">
-              {children}
-            </main>
-          </CartProvider>
-        </AuthProvider>
+          <AuthProvider>
+            <CartProvider>
+              <Navbar />
+              <main className="flex-1">
+                {children}
+              </main>
+            </CartProvider>
+          </AuthProvider>
         <Footer />
+        <Toaster />
       </body>
     </html>
   );

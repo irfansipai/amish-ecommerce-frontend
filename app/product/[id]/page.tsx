@@ -1,39 +1,42 @@
 // frontend/app/product/[id]/page.tsx
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import Image from "next/image"
-import { useParams } from "next/navigation"
-import { Phone, MapPin, Sparkles } from "lucide-react"
-import { useCart } from "@/context/CartContext"
-import { api } from "@/lib/api"
+import { useEffect, useState } from "react";
+import Image from "next/image";
+import { useParams } from "next/navigation";
+import { Phone, MapPin, Sparkles } from "lucide-react";
+import { useCart } from "@/context/CartContext";
+import { api } from "@/lib/api";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@/components/ui/accordion"
+} from "@/components/ui/accordion";
+import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 interface Product {
-  id: string
-  name: string
-  description: string | null
-  price: string
-  sku: string
-  stock: number
-  is_active: boolean
-  image_url: string | null
+  id: string;
+  name: string;
+  description: string | null;
+  price: string;
+  sku: string;
+  stock: number;
+  is_active: boolean;
+  image_url: string | null;
 }
 
 interface ProductState {
-  id: string
-  name: string
-  description: string
-  price: string
-  sku: string
-  stock: number
-  is_active: boolean
-  image_url: string
+  id: string;
+  name: string;
+  description: string;
+  price: string;
+  sku: string;
+  stock: number;
+  is_active: boolean;
+  image_url: string;
 }
 
 const productDetails = [
@@ -53,55 +56,68 @@ const productDetails = [
   "Lining: 75% Acetate, 25% Cotton",
   "Lining: 78% Polyamide, 18% Viscose, 4% Elastane",
   "Lining: 100% Silk",
-  "Pocket lining: 100% Cotton"
-]
+  "Pocket lining: 100% Cotton",
+];
 
-const availableSizes = ["44", "46", "48", "50", "52", "54", "56"]
+const availableSizes = ["44", "46", "48", "50", "52", "54", "56"];
 
 export default function ProductDetailPage() {
-  const params = useParams<{ id: string }>()
-  const [openAccordions, setOpenAccordions] = useState<string[]>(["product-details"])
-  const [selectedSize, setSelectedSize] = useState(availableSizes[0])
-  const [product, setProduct] = useState<ProductState | null>(null)
-  const [loading, setLoading] = useState(true)
-  const { addToCart } = useCart()
+  const params = useParams<{ id: string }>();
+  const [openAccordions, setOpenAccordions] = useState<string[]>([
+    "product-details",
+  ]);
+  const [selectedSize, setSelectedSize] = useState(availableSizes[0]);
+  const [product, setProduct] = useState<ProductState | null>(null);
+  const [loading, setLoading] = useState(true);
+  const { addToCart } = useCart();
+  const { user } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
-    const productId = params?.id
+    const productId = params?.id;
 
     if (!productId) {
-      setLoading(false)
-      return
+      setLoading(false);
+      return;
     }
 
     const fetchProduct = async () => {
-      setLoading(true)
+      setLoading(true);
 
       try {
-        const response = await api.get<Product>(`/api/v1/products/${productId}`)
-        const data = response.data
+        const response = await api.get<Product>(
+          `/api/v1/products/${productId}`,
+        );
+        const data = response.data;
 
         setProduct({
           ...data,
           description: data.description || "No description available.",
-          image_url:
-            data.image_url ||
-            "/placeholder.svg?height=800&width=600",
-        })
+          image_url: data.image_url || "/placeholder.svg?height=800&width=600",
+        });
       } catch (error) {
-        console.error("Failed to fetch product:", error)
-        setProduct(null)
+        console.error("Failed to fetch product:", error);
+        setProduct(null);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    fetchProduct()
-  }, [params])
+    fetchProduct();
+  }, [params]);
 
   const handleAddToCart = () => {
+    if (!user) {
+      toast.error("Authentication Required", {
+        description:
+          "Please sign in or create an account to add items to your bag.",
+      });
+      router.push("/auth");
+      return;
+    }
+
     if (!product) {
-      return
+      return;
     }
 
     addToCart({
@@ -109,8 +125,8 @@ export default function ProductDetailPage() {
       quantity: 1,
       size: selectedSize,
       variant: "Default",
-    })
-  }
+    });
+  };
 
   if (loading) {
     return (
@@ -119,15 +135,17 @@ export default function ProductDetailPage() {
           Loading details...
         </p>
       </div>
-    )
+    );
   }
 
   if (!product) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <p className="text-sm tracking-wide text-muted-foreground">Product not found</p>
+        <p className="text-sm tracking-wide text-muted-foreground">
+          Product not found
+        </p>
       </div>
-    )
+    );
   }
 
   return (
@@ -159,27 +177,26 @@ export default function ProductDetailPage() {
       {/* Information Section */}
       <section className="max-w-7xl mx-auto px-6 md:px-12 py-12 md:py-16">
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-12 lg:gap-20">
-          
           {/* Left Column - The Narrative (60%) */}
           <div className="lg:col-span-3">
             {/* Tag */}
             <p className="text-[10px] tracking-[0.2em] text-muted-foreground mb-2">
               SEE NOW, BUY NOW
             </p>
-            
+
             {/* Product Title */}
             <h2 className="font-serif text-xl md:text-2xl font-light tracking-wide mb-3">
               {product.name}
             </h2>
-            
+
             {/* Price */}
             <p className="text-base font-light tracking-wide mb-8">
               {product.price}
             </p>
 
             {/* Size Accordion */}
-            <Accordion 
-              type="multiple" 
+            <Accordion
+              type="multiple"
               value={openAccordions}
               onValueChange={setOpenAccordions}
               className="border-t border-border/40"
@@ -223,20 +240,26 @@ export default function ProductDetailPage() {
             </div>
 
             {/* Product Details Accordion */}
-            <Accordion 
-              type="multiple" 
+            <Accordion
+              type="multiple"
               value={openAccordions}
               onValueChange={setOpenAccordions}
               className="mt-8 border-t border-border/40"
             >
-              <AccordionItem value="product-details" className="border-border/40">
+              <AccordionItem
+                value="product-details"
+                className="border-border/40"
+              >
                 <AccordionTrigger className="text-sm font-light tracking-wide hover:no-underline py-4">
                   Product Details
                 </AccordionTrigger>
                 <AccordionContent>
                   <ul className="space-y-1.5 pb-2">
                     {productDetails.map((detail, index) => (
-                      <li key={index} className="text-sm font-light text-foreground/80 flex items-start">
+                      <li
+                        key={index}
+                        className="text-sm font-light text-foreground/80 flex items-start"
+                      >
                         <span className="mr-2">•</span>
                         {detail}
                       </li>
@@ -251,9 +274,11 @@ export default function ProductDetailPage() {
                 </AccordionTrigger>
                 <AccordionContent>
                   <p className="text-sm font-light leading-relaxed text-foreground/80 pb-2">
-                    We are committed to providing the finest craftsmanship and materials. Each piece is meticulously 
-                    crafted by skilled artisans using time-honored techniques passed down through generations. 
-                    Our dedication to sustainability ensures that every product meets the highest ethical standards.
+                    We are committed to providing the finest craftsmanship and
+                    materials. Each piece is meticulously crafted by skilled
+                    artisans using time-honored techniques passed down through
+                    generations. Our dedication to sustainability ensures that
+                    every product meets the highest ethical standards.
                   </p>
                 </AccordionContent>
               </AccordionItem>
@@ -280,7 +305,10 @@ export default function ProductDetailPage() {
               {/* Utility Links */}
               <div className="mt-8 space-y-5">
                 <div className="flex items-start gap-3">
-                  <Phone className="w-4 h-4 mt-0.5 flex-shrink-0" strokeWidth={1.5} />
+                  <Phone
+                    className="w-4 h-4 mt-0.5 flex-shrink-0"
+                    strokeWidth={1.5}
+                  />
                   <div>
                     <p className="text-sm font-light underline underline-offset-2 cursor-pointer hover:opacity-70">
                       Contact Us
@@ -292,7 +320,10 @@ export default function ProductDetailPage() {
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" strokeWidth={1.5} />
+                  <MapPin
+                    className="w-4 h-4 mt-0.5 flex-shrink-0"
+                    strokeWidth={1.5}
+                  />
                   <div>
                     <p className="text-sm font-light underline underline-offset-2 cursor-pointer hover:opacity-70">
                       Find in store and Book an appointment
@@ -301,13 +332,17 @@ export default function ProductDetailPage() {
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <Sparkles className="w-4 h-4 mt-0.5 flex-shrink-0" strokeWidth={1.5} />
+                  <Sparkles
+                    className="w-4 h-4 mt-0.5 flex-shrink-0"
+                    strokeWidth={1.5}
+                  />
                   <div>
                     <p className="text-sm font-light underline underline-offset-2 cursor-pointer hover:opacity-70">
                       Maison Services
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      Complimentary Shipping, Complimentary Exchanges & Returns, Secure Payments and Signature Packaging
+                      Complimentary Shipping, Complimentary Exchanges & Returns,
+                      Secure Payments and Signature Packaging
                     </p>
                   </div>
                 </div>
@@ -317,5 +352,5 @@ export default function ProductDetailPage() {
         </div>
       </section>
     </div>
-  )
+  );
 }
