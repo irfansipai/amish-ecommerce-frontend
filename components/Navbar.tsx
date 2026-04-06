@@ -31,7 +31,7 @@ export function Navbar() {
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
         scrolled
           ? "bg-black/95 backdrop-blur-md border-b border-white/10"
-          : "bg-black/80 backdrop-blur-sm"
+          : "bg-transparent"
       }`}
     >
       <nav className="flex items-center justify-between px-6 lg:px-12 py-4">

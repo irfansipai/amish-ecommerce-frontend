@@ -32,8 +32,7 @@ export default function RootLayout({
         <AuthProvider>
           <CartProvider>
             <Navbar />
-            {/* Added padding-top to prevent content from hiding behind the fixed navbar */}
-            <main className="flex-1 pt-[72px]">
+            <main className="flex-1">
               {children}
             </main>
           </CartProvider>
