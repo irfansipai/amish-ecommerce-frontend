@@ -46,9 +46,10 @@ export default function ShoppingBagPage() {
   const vat = subtotal * vatRate
   const total = subtotal
   const isEmpty = !isLoading && cartItems.length === 0
-  const getItemStyle = (item: CartItem) =>
-    (item as CartItem & { style?: string }).style ?? item.product_id
-
+  const getItemStyle = (item: CartItem) =>{
+    // (item as CartItem & { style?: string }).style ?? item.product_id
+  return item.product_id.split('-')[0].toUpperCase()
+  }
   return (
     <div className="bg-background">
       {/* Hero Banner */}
