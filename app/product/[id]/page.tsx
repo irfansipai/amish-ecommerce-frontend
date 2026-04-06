@@ -4,7 +4,8 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useParams } from "next/navigation";
-import { Phone, MapPin, Sparkles } from "lucide-react";
+import Link from "next/link";
+import { ChevronLeft, Phone, MapPin, Sparkles } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { api } from "@/lib/api";
 import {
@@ -323,11 +324,20 @@ export default function ProductDetailPage() {
             </Accordion>
           </div>
 
-          {/* Right Column - The Buy Box (40%) */}
-          <div className="lg:col-span-2">
-            <div className="sticky top-8">
-              {/* Helper Text */}
-              <p className="text-sm font-light text-muted-foreground mb-4">
+           {/* Right Column - The Buy Box (40%) */}
+           <div className="lg:col-span-2">
+             <div className="sticky top-8">
+               {/* Back to Catalog Link */}
+               <Link
+                 href="/catalog"
+                 className="inline-flex items-center gap-2 text-sm font-semibold uppercase text-foreground hover:underline transition-colors mb-6"
+               >
+                 <ChevronLeft className="w-4 h-4" />
+                 Back to Catalog
+               </Link>
+
+               {/* Helper Text */}
+               <p className="text-sm font-light text-muted-foreground mb-4">
                 Select the size of the item to see the expected delivery date.
               </p>
 
