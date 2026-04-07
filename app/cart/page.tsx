@@ -11,6 +11,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Button } from "@/components/ui/button"
 import { useCart, type CartItem } from "@/context/CartContext"
 import { useAuth } from "@/context/AuthContext"
+import { TAX_RATE, SHIPPING_CHARGE } from "@/lib/constants"
 
 // Format price with Korean Won
 const formatPrice = (price: number) => {
@@ -45,9 +46,9 @@ export default function ShoppingBagPage() {
     (acc, item) => acc + normalizePrice(item.price) * item.quantity,
     0
   )
-  const vatRate = 0.2
+  const vatRate = TAX_RATE
   const vat = subtotal * vatRate
-  const total = subtotal
+  const total = subtotal + SHIPPING_CHARGE
 
   const isEmpty = !isLoading && cartItems.length === 0
   const getItemStyle = (item: CartItem) => {
@@ -209,7 +210,7 @@ export default function ShoppingBagPage() {
                     <div className="flex items-center justify-between text-sm">
                       <span>Shipping</span>
                       <span className="text-xs text-muted-foreground">
-                        KR 0 (DHL Express Worldwide) ∨
+                        {SHIPPING_CHARGE === 0 ? "KR 0 (DHL Express Worldwide) ∨" : `${formatPrice(SHIPPING_CHARGE)} (DHL Express)`}
                       </span>
                     </div>
                     <div className="flex items-center justify-between border-t pt-4">

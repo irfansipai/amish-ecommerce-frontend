@@ -1,3 +1,4 @@
+// app/account/orders/[id]/page.tsx
 "use client"
 
 import { useEffect, useState } from "react"
@@ -5,7 +6,9 @@ import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
 import { api } from "@/lib/api"
+import { TAX_RATE, SHIPPING_CHARGE } from "@/lib/constants"
 import { ArrowLeft, Package, MapPin, CreditCard } from "lucide-react"
+import { toast } from "sonner"
 
 interface OrderItem {
   id: string
@@ -80,6 +83,7 @@ export default function OrderDetailsPage() {
   const [isEnrichingItems, setIsEnrichingItems] = useState(false)
   const [error, setError] = useState("")
   const [cancelling, setCancelling] = useState(false)
+  const [isDownloading, setIsDownloading] = useState(false)
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -138,6 +142,27 @@ export default function OrderDetailsPage() {
     enrichItems()
   }, [order])
 
+  const handleDownload = async () => {
+    if (!order) return;
+    setIsDownloading(true);
+    try {
+      const response = await api.get(`/api/v1/orders/${order.id}/invoice`, { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      const companyName = process.env.NEXT_PUBLIC_COMPANY_NAME || "MAISON";
+      link.setAttribute('download', `invoice_${companyName}_${order.id}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      toast.error("Failed to download invoice.");
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   const handleCancelOrder = async () => {
     if (!order) return
     setCancelling(true)
@@ -177,6 +202,10 @@ export default function OrderDetailsPage() {
     (sum, item) => sum + parseFloat(item.price_at_purchase) * item.quantity,
     0
   )
+
+  const gstAmount = subtotal * TAX_RATE
+  const shippingAmount = parseFloat(order.shipping_amount) || SHIPPING_CHARGE
+  const grandTotal = subtotal + gstAmount + shippingAmount
 
   const displayItems = enrichedItems.length > 0 ? enrichedItems : order.items.map(item => ({
     ...item,
@@ -220,6 +249,13 @@ export default function OrderDetailsPage() {
               {cancelling ? "CANCELLING..." : "CANCEL ORDER"}
             </button>
           )}
+          <button
+            onClick={handleDownload}
+            disabled={isDownloading}
+            className="px-6 py-2 text-xs font-bold tracking-[0.15em] border border-zinc-200 text-zinc-900 hover:bg-zinc-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed uppercase"
+          >
+            {isDownloading ? "DOWNLOADING..." : "DOWNLOAD INVOICE"}
+          </button>
         </div>
       </div>
 
@@ -305,9 +341,9 @@ export default function OrderDetailsPage() {
                 <span className="font-medium text-zinc-900">{formatINR(subtotal)}</span>
               </div>
               <div className="flex justify-between text-xs text-zinc-600">
-                <span className="tracking-wide">Tax</span>
+                <span className="tracking-wide">GST ({TAX_RATE * 100}%)</span>
                 <span className="font-medium text-zinc-900">
-                  {formatINR(order.tax_amount)}
+                  {formatINR(gstAmount)}
                 </span>
               </div>
               <div className="flex justify-between text-xs text-zinc-600">
@@ -318,9 +354,9 @@ export default function OrderDetailsPage() {
               </div>
               <div className="border-t border-zinc-200 pt-4">
                 <div className="flex justify-between text-sm">
-                  <span className="font-medium tracking-wide text-zinc-900">Total</span>
+                  <span className="font-medium tracking-wide text-zinc-900">Grand Total</span>
                   <span className="font-semibold text-zinc-900">
-                    {formatINR(order.total_amount)}
+                    {formatINR(grandTotal)}
                   </span>
                 </div>
               </div>

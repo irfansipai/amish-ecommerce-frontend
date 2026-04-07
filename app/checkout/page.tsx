@@ -11,6 +11,7 @@ import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Separator } from "@/components/ui/separator"
 import { useCart } from "@/context/CartContext"
 import { api } from "@/lib/api"
+import { SHIPPING_CHARGE } from "@/lib/constants"
 
 function formatINR(amount: number) {
   return new Intl.NumberFormat("en-IN", {
@@ -57,7 +58,7 @@ export default function CheckoutPage() {
   }
 
   const subtotal = cartTotal
-  const shipping = 0
+  const shipping = SHIPPING_CHARGE
   const total = subtotal + shipping
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -94,10 +95,10 @@ export default function CheckoutPage() {
 
       // Hard redirect to success page to ensure all fresh data is loaded
       window.location.href = "/success"
-      
+
     } catch (error: any) {
       console.error("Checkout failed:", error)
-      
+
       const status = error.response?.status
       const detail = error.response?.data?.detail
 
