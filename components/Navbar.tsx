@@ -69,7 +69,7 @@ export function Navbar() {
           <div className="flex flex-1 items-center justify-start">
             <Link href="/" className="md:hidden">
               <h1 className="font-serif text-2xl font-light tracking-[0.3em] text-white">
-                MAISON
+                {process.env.NEXT_PUBLIC_COMPANY_NAME || "Maison"}
               </h1>
             </Link>
           </div>
@@ -78,7 +78,7 @@ export function Navbar() {
           <div className="hidden md:flex flex-none absolute left-1/2 -translate-x-1/2">
             <Link href="/">
               <h1 className="font-serif text-2xl md:text-3xl font-light tracking-[0.3em] text-white">
-                MAISON
+                {process.env.NEXT_PUBLIC_COMPANY_NAME || "Maison"}
               </h1>
             </Link>
           </div>

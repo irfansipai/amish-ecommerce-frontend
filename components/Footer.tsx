@@ -1,19 +1,19 @@
 // frontend/components/Footer.tsx
-"use client"
+"use client";
 
-import { useState } from "react"
-import Link from "next/link"
-import { ChevronRight, ArrowRight } from "lucide-react"
-import { Input } from "@/components/ui/input"
+import { useState } from "react";
+import Link from "next/link";
+import { ChevronRight, ArrowRight } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 export function Footer() {
-  const [email, setEmail] = useState("")
+  const [email, setEmail] = useState("");
 
   const handleNewsletterSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    console.log("Newsletter signup:", email)
-    setEmail("")
-  }
+    e.preventDefault();
+    console.log("Newsletter signup:", email);
+    setEmail("");
+  };
 
   return (
     <footer className="bg-black text-white">
@@ -22,14 +22,17 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8">
           {/* Column 1: Client Services */}
           <div>
-            <h3 className="text-xs tracking-[0.2em] text-slate-400 mb-8">MAY WE HELP YOU?</h3>
+            <h3 className="text-xs tracking-[0.2em] text-slate-400 mb-8">
+              MAY WE HELP YOU?
+            </h3>
             <ul className="space-y-4">
-              {["Contact Us"
-              // , "FAQs", "Email Unsubscribe", "Sitemap"
-            ].map((item) => (
+              {[
+                "Contact Us",
+                // , "FAQs", "Email Unsubscribe", "Sitemap"
+              ].map((item) => (
                 <li key={item}>
-                  <Link 
-                    href="#" 
+                  <Link
+                    href="/contact"
                     className="text-sm text-white hover:text-slate-300 underline underline-offset-4 decoration-white/30 hover:decoration-white/60 transition-all"
                   >
                     {item}
@@ -41,7 +44,9 @@ export function Footer() {
 
           {/* Column 2: The Company */}
           <div>
-            <h3 className="text-xs tracking-[0.2em] text-slate-400 mb-8">THE COMPANY</h3>
+            <h3 className="text-xs tracking-[0.2em] text-slate-400 mb-8">
+              THE COMPANY
+            </h3>
             <ul className="space-y-4">
               {[
                 // "About Maison",
@@ -56,7 +61,10 @@ export function Footer() {
                 // "Vulnerability Disclosure Policy"
               ].map((item) => (
                 <li key={item}>
-                  <Link href="#" className="text-sm text-white hover:text-slate-300 underline underline-offset-4 decoration-white/30 hover:decoration-white/60 transition-all">
+                  <Link
+                    href={item.toLowerCase().replaceAll(" ", "-")}
+                    className="text-sm text-white hover:text-slate-300 underline underline-offset-4 decoration-white/30 hover:decoration-white/60 transition-all"
+                  >
                     {item}
                   </Link>
                 </li>
@@ -130,16 +138,20 @@ export function Footer() {
       {/* Copyright Bar */}
       <div className="border-t border-white/10 px-6 lg:px-12 py-8">
         <div className="max-w-[1800px] mx-auto">
-          <p className="text-xs text-white/50">© 2016 - 2026 Maison S.p.A. - All rights reserved.</p>
+          <p className="text-xs text-white/50">
+            © {new Date().getFullYear()}{" "}
+            {process.env.NEXT_PUBLIC_COMPANY_NAME || "Maison"} S.p.A. - All
+            rights reserved.
+          </p>
         </div>
       </div>
 
       {/* Large Brand Logo */}
       <div className="overflow-hidden pb-8">
         <h2 className="font-serif text-[20vw] font-light tracking-[0.1em] text-white/10 text-center whitespace-nowrap select-none">
-          MAISON
+          {process.env.NEXT_PUBLIC_COMPANY_NAME || "Maison"}
         </h2>
       </div>
     </footer>
-  )
+  );
 }
