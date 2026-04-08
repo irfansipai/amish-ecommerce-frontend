@@ -85,9 +85,10 @@ export function Navbar() {
 
           {/* Right Side */}
           <div className="flex flex-1 items-center justify-end gap-4 md:gap-6">
-            <button className="text-white hover:opacity-70 transition-opacity" aria-label="Gifts">
+            {/* <button className="text-white hover:opacity-70 transition-opacity" aria-label="Gifts">
               <Gift className="size-5" />
-            </button>
+            </button> */} 
+            {/* gifts are setup later. */}
             <Link
               href={isLoggedIn ? "/account" : "/auth"}
               className="text-white hover:opacity-70 transition-opacity"

@@ -4,20 +4,22 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { api } from "@/lib/api"
 import { ShoppingBag, ArrowRight } from "lucide-react"
+import { TAX_RATE, SHIPPING_CHARGE } from "@/lib/constants"
 
 interface OrderItem {
   id: string
   name: string
   quantity: number
-  price: number
+  price_at_purchase: string
 }
 
 interface Order {
   id: string
   status: string
-  total_amount: number
+  total_amount: string
   created_at: string
   items: OrderItem[]
+  shipping_amount: string
 }
 
 function formatINR(amount: number) {
@@ -109,59 +111,70 @@ export default function OrdersPage() {
       </h1>
 
       <div className="space-y-4">
-        {orders.map((order) => (
-          <Link
-            key={order.id}
-            href={`/account/orders/${order.id}`}
-            className="block border border-zinc-200 p-6 hover:border-zinc-300 transition-colors"
-          >
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              {/* Order Info */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-4">
-                  <span className="text-[10px] font-bold tracking-[0.15em] text-zinc-500 uppercase">
-                    Order
-                  </span>
-                  <span className="text-sm font-mono text-zinc-900">
-                    #{order.id.slice(0, 8).toUpperCase()}
-                  </span>
-                </div>
-                <div className="flex items-center gap-4">
-                  <span className="text-[10px] font-bold tracking-[0.15em] text-zinc-500 uppercase">
-                    Date
-                  </span>
-                  <span className="text-sm text-zinc-600">
-                    {new Date(order.created_at).toLocaleDateString("en-IN", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })}
-                  </span>
-                </div>
-              </div>
+        {orders.map((order) => {
+          const subtotal = order.items.reduce(
+            (sum, item) => sum + parseFloat(item.price_at_purchase) * item.quantity,
+            0
+          )
 
-              {/* Status & Amount */}
-              <div className="flex items-center gap-6">
-                <span
-                  className={`inline-flex items-center px-3 py-1 text-[10px] font-bold tracking-[0.15em] ${getStatusColor(order.status)}`}
-                >
-                  {order.status}
-                </span>
-                <div className="text-right">
-                  <p className="text-[10px] font-bold tracking-[0.15em] text-zinc-500 uppercase">
-                    Total
-                  </p>
-                  <p className="text-lg font-medium text-zinc-900">
-                    {formatINR(order.total_amount)}
-                  </p>
-                  <p className="text-[10px] text-zinc-500">
-                    {order.items.length} item{order.items.length !== 1 ? "s" : ""}
-                  </p>
+          const gstAmount = subtotal * TAX_RATE
+          const shippingAmount = parseFloat(order.shipping_amount) || SHIPPING_CHARGE
+          const grandTotal = subtotal + gstAmount + shippingAmount
+
+          return (
+            <Link
+              key={order.id}
+              href={`/account/orders/${order.id}`}
+              className="block border border-zinc-200 p-6 hover:border-zinc-300 transition-colors"
+            >
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                {/* Order Info */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-4">
+                    <span className="text-[10px] font-bold tracking-[0.15em] text-zinc-500 uppercase">
+                      Order
+                    </span>
+                    <span className="text-sm font-mono text-zinc-900">
+                      #{order.id.slice(0, 8).toUpperCase()}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <span className="text-[10px] font-bold tracking-[0.15em] text-zinc-500 uppercase">
+                      Date
+                    </span>
+                    <span className="text-sm text-zinc-600">
+                      {new Date(order.created_at).toLocaleDateString("en-IN", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Status & Amount */}
+                <div className="flex items-center gap-6">
+                  <span
+                    className={`inline-flex items-center px-3 py-1 text-[10px] font-bold tracking-[0.15em] ${getStatusColor(order.status)}`}
+                  >
+                    {order.status}
+                  </span>
+                  <div className="text-right">
+                    <p className="text-[10px] font-bold tracking-[0.15em] text-zinc-500 uppercase">
+                      Total
+                    </p>
+                    <p className="text-lg font-medium text-zinc-900">
+                      {formatINR(grandTotal)}
+                    </p>
+                    <p className="text-[10px] text-zinc-500">
+                      {order.items.length} item{order.items.length !== 1 ? "s" : ""}
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
-          </Link>
-        ))}
+            </Link>
+          )
+        })}
       </div>
     </div>
   )
