@@ -8,6 +8,8 @@ import { Menu, Search, ShoppingBag, User, Gift } from "lucide-react"
 import { useCart } from "@/context/CartContext"
 import { useAuth } from "@/context/AuthContext"
 import { toast } from "sonner"
+import { Sidebar } from "./Sidebar"
+import { SearchModal } from "./SearchModal"
 
 function generateAvatar(email: string) {
   return email.charAt(0).toUpperCase()
@@ -15,6 +17,8 @@ function generateAvatar(email: string) {
 
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false)
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
   const pathname = usePathname() // 2. Get the current URL path
   const router = useRouter()
 
@@ -34,6 +38,17 @@ export function Navbar() {
     window.addEventListener("scroll", handleScroll)
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
+
+  useEffect(() => {
+    if (isMenuOpen || isSearchOpen) {
+      document.body.style.overflow = "hidden"
+    } else {
+      document.body.style.overflow = "unset"
+    }
+    return () => {
+      document.body.style.overflow = "unset"
+    }
+  }, [isMenuOpen, isSearchOpen])
 
   // 4. Dynamically set the background class based on the page AND scroll state
   const navbarBackground = isTransparentPage
@@ -88,7 +103,11 @@ export function Navbar() {
                 <User className="size-5" />
               )}
             </Link>
-            <button className="text-white hover:opacity-70 transition-opacity" aria-label="Search">
+            <button
+              onClick={() => setIsSearchOpen(true)}
+              className="text-white hover:opacity-70 transition-opacity"
+              aria-label="Search"
+            >
               <Search className="size-5" />
             </button>
             <button
@@ -113,7 +132,10 @@ export function Navbar() {
                 </span>
               )}
             </button>
-            <button className="flex items-center gap-2 text-white hover:opacity-70 transition-opacity">
+            <button
+              onClick={() => setIsMenuOpen(true)}
+              className="flex items-center gap-2 text-white hover:opacity-70 transition-opacity"
+            >
               <Menu className="size-5" />
               <span className="hidden md:inline text-sm tracking-wider">MENU</span>
             </button>
@@ -122,6 +144,9 @@ export function Navbar() {
       </header>
 
       {!isTransparentPage && <div className="h-[57px] w-full" />}
+
+      <Sidebar isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
+      <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
     </>
   )
 }
