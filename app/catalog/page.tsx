@@ -19,7 +19,7 @@ interface Product {
   id: string
   name: string
   price: number
-  image_url: string
+  image_urls: string[]
   is_featured: boolean
   is_active: boolean
   description?: string
@@ -52,13 +52,12 @@ function ProductCard({ product }: { product: Product }) {
       className={`group cursor-pointer ${product.is_featured ? "col-span-1 md:col-span-2 xl:col-span-2" : "col-span-1"}`}
     >
       <article
-        className={`group cursor-pointer ${
-          product.is_featured ? "col-span-1 md:col-span-2 xl:col-span-2" : "col-span-1"
-        }`}
+        className={`group cursor-pointer ${product.is_featured ? "col-span-1 md:col-span-2 xl:col-span-2" : "col-span-1"
+          }`}
       >
         <div className="relative aspect-square overflow-hidden bg-neutral-50">
           <Image
-            src={product.image_url || "/placeholder.svg?height=800&width=600"}
+            src={(product.image_urls && product.image_urls[0]) || "/placeholder.svg?height=800&width=600"}
             alt={product.name}
             fill
             className="object-cover transition-transform duration-500 group-hover:scale-105"
@@ -127,11 +126,10 @@ function CategoryNav() {
           {categories.map((category, index) => (
             <button
               key={category}
-              className={`text-[11px] tracking-wide whitespace-nowrap transition-colors ${
-                index === 0
+              className={`text-[11px] tracking-wide whitespace-nowrap transition-colors ${index === 0
                   ? "text-foreground font-medium uppercase"
                   : "text-muted-foreground hover:text-foreground"
-              }`}
+                }`}
             >
               {category}
             </button>

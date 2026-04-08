@@ -32,7 +32,7 @@ interface Product {
   sku: string;
   stock: number;
   is_active: boolean;
-  image_url: string | null;
+  image_urls: string[];
 }
 
 interface ProductState {
@@ -43,7 +43,7 @@ interface ProductState {
   sku: string;
   stock: number;
   is_active: boolean;
-  image_url: string;
+  image_urls: string[];
 }
 
 const productDetails = [
@@ -115,7 +115,9 @@ export default function ProductDetailPage() {
         setProduct({
           ...data,
           description: data.description || "No description available.",
-          image_url: data.image_url || "/placeholder.svg?height=800&width=600",
+          image_urls: data.image_urls && data.image_urls.length > 0
+            ? data.image_urls
+            : ["/placeholder.svg?height=800&width=600"],
         });
       } catch (error) {
         console.error("Failed to fetch product:", error);
@@ -170,8 +172,6 @@ export default function ProductDetailPage() {
     );
   }
 
-  const displayImages = [product.image_url, product.image_url, product.image_url];
-
   return (
     <div className="bg-background">
       {/* Editorial Gallery */}
@@ -184,7 +184,7 @@ export default function ProductDetailPage() {
           className="w-full"
         >
           <CarouselContent className="ml-0">
-            {displayImages.map((imgUrl, index) => (
+            {product.image_urls.map((imgUrl, index) => (
               <CarouselItem key={index} className="pl-0 basis-full lg:basis-1/2 border-r border-white/10">
                 <div className="relative w-full aspect-[3/4] md:h-[80vh] bg-neutral-100">
                   <Image
@@ -202,7 +202,7 @@ export default function ProductDetailPage() {
 
         {/* Custom Minimalist Indicator */}
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-10 mix-blend-difference">
-          {displayImages.map((_, index) => (
+          {product.image_urls.map((_, index) => (
             <div
               key={index}
               className={`h-[2px] transition-all duration-500 ease-in-out ${currentSlide === index
@@ -324,20 +324,20 @@ export default function ProductDetailPage() {
             </Accordion>
           </div>
 
-           {/* Right Column - The Buy Box (40%) */}
-           <div className="lg:col-span-2">
-             <div className="sticky top-8">
-               {/* Back to Catalog Link */}
-               <Link
-                 href="/catalog"
-                 className="inline-flex items-center gap-2 text-sm font-semibold uppercase text-foreground hover:underline transition-colors mb-6"
-               >
-                 <ChevronLeft className="w-4 h-4" />
-                 Back to Catalog
-               </Link>
+          {/* Right Column - The Buy Box (40%) */}
+          <div className="lg:col-span-2">
+            <div className="sticky top-8">
+              {/* Back to Catalog Link */}
+              <Link
+                href="/catalog"
+                className="inline-flex items-center gap-2 text-sm font-semibold uppercase text-foreground hover:underline transition-colors mb-6"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                Back to Catalog
+              </Link>
 
-               {/* Helper Text */}
-               <p className="text-sm font-light text-muted-foreground mb-4">
+              {/* Helper Text */}
+              <p className="text-sm font-light text-muted-foreground mb-4">
                 Select the size of the item to see the expected delivery date.
               </p>
 
