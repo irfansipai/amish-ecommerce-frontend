@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react"
 import { usePathname, useRouter } from "next/navigation" // 1. Import usePathname
 import Link from "next/link"
-import { Menu, Search, ShoppingBag, User, Gift, Plus } from "lucide-react"
+import { Menu, Search, ShoppingBag, User, Gift } from "lucide-react"
 import { useCart } from "@/context/CartContext"
 import { useAuth } from "@/context/AuthContext"
 import { toast } from "sonner"
@@ -22,9 +22,9 @@ export function Navbar() {
   const { cartCount } = useCart()
 
   // 3. Define which pages get the transparent treatment
-  const isTransparentPage = 
-    pathname === "/" || 
-    pathname === "/cart" || 
+  const isTransparentPage =
+    pathname === "/" ||
+    pathname === "/cart" ||
     pathname.startsWith("/product/")
 
   useEffect(() => {
@@ -49,24 +49,27 @@ export function Navbar() {
       <header
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 w-full ${navbarBackground}`}
       >
-        <nav className="flex items-center justify-between px-6 lg:px-12 py-4">
-          {/* Left Side */}
-          <div className="flex items-center gap-6">
-            <button className="flex items-center gap-2 text-white text-sm tracking-wider hover:opacity-70 transition-opacity">
-              <Plus className="size-4" />
-              <span className="hidden sm:inline">Contact Us</span>
-            </button>
+        <nav className="flex items-center justify-between relative w-full px-6 lg:px-12 py-4">
+          {/* Left Side / Mobile Logo */}
+          <div className="flex flex-1 items-center justify-start">
+            <Link href="/" className="md:hidden">
+              <h1 className="font-serif text-2xl font-light tracking-[0.3em] text-white">
+                MAISON
+              </h1>
+            </Link>
           </div>
 
-          {/* Center Logo */}
-          <Link href="/" className="absolute left-1/2 -translate-x-1/2">
-            <h1 className="font-serif text-2xl md:text-3xl font-light tracking-[0.3em] text-white">
-              MAISON
-            </h1>
-          </Link>
+          {/* Center Logo (Desktop Only) */}
+          <div className="hidden md:flex flex-none absolute left-1/2 -translate-x-1/2">
+            <Link href="/">
+              <h1 className="font-serif text-2xl md:text-3xl font-light tracking-[0.3em] text-white">
+                MAISON
+              </h1>
+            </Link>
+          </div>
 
           {/* Right Side */}
-          <div className="flex items-center gap-4 md:gap-6">
+          <div className="flex flex-1 items-center justify-end gap-4 md:gap-6">
             <button className="text-white hover:opacity-70 transition-opacity" aria-label="Gifts">
               <Gift className="size-5" />
             </button>
