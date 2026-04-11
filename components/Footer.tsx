@@ -148,7 +148,7 @@ export function Footer() {
 
       {/* Large Brand Logo */}
       <div className="overflow-hidden pb-8">
-        <h2 className="font-serif text-[20vw] font-light tracking-[0.1em] text-white/10 text-center whitespace-nowrap select-none">
+        <h2 className="font-serif text-[20vw] font-light tracking-[0.1em] text-white text-center whitespace-nowrap select-none">
           {process.env.NEXT_PUBLIC_COMPANY_NAME || "Maison"}
         </h2>
       </div>

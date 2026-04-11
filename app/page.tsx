@@ -7,47 +7,17 @@ import Link from "next/link"
 import { Menu, Search, ShoppingBag, User, Gift, Plus, ArrowRight, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { api } from "@/lib/api"
 
 // TypeScript interface for products
 interface Product {
   id: string
   name: string
   price: number
-  image_url: string
+  image_urls: string[]
   category: string
 }
 
-// Dummy product data
-const featuredProducts: Product[] = [
-  {
-    id: "1",
-    name: "Heritage Leather Tote",
-    price: 185000,
-    image_url: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=600&h=800&fit=crop",
-    category: "Women's Handbags"
-  },
-  {
-    id: "2",
-    name: "Signature Stiletto Heels",
-    price: 92000,
-    image_url: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=600&h=800&fit=crop",
-    category: "Women's Shoes"
-  },
-  {
-    id: "3",
-    name: "Classic White Sneakers",
-    price: 78000,
-    image_url: "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=600&h=800&fit=crop",
-    category: "Men's Sneakers"
-  },
-  {
-    id: "4",
-    name: "Monogram Belt Bag",
-    price: 125000,
-    image_url: "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=600&h=800&fit=crop",
-    category: "Men's Bags"
-  }
-]
 
 // Price formatter for Indian Rupees
 const formatPrice = (price: number): string => {
@@ -94,43 +64,44 @@ function HeroSection() {
 function ProductCard({ product }: { product: Product }) {
   const [isHovered, setIsHovered] = useState(false)
 
+  // Safely grab the first image, or use a placeholder
+  const displayImage = product.image_urls?.[0] || "/placeholder.svg?height=800&width=600"
+
   return (
     <article 
       className="group relative"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Product Image */}
       <div className="relative aspect-[3/4] overflow-hidden bg-slate-100">
         <Image
-          src={product.image_url}
+          src={displayImage}
           alt={product.name}
           fill
+          sizes="(max-width: 768px) 100vw, 25vw"
           className={`object-cover transition-transform duration-700 ${
             isHovered ? "scale-105" : "scale-100"
           }`}
         />
         
-        {/* Quick Add Overlay */}
-        <div 
-          className={`absolute inset-0 bg-black/40 flex items-center justify-center transition-opacity duration-300 ${
+        <div className={`absolute inset-0 bg-black/40 flex items-center justify-center transition-opacity duration-300 ${
             isHovered ? "opacity-100" : "opacity-0"
-          }`}
-        >
-          <Button 
-            className="bg-white text-black hover:bg-white/90 rounded-none px-8 py-5 text-xs tracking-[0.15em] font-medium"
-          >
-            QUICK ADD
-          </Button>
+          }`}>
+          <Link href={`/product/${product.id}`}>
+             <Button className="bg-white text-black hover:bg-white/90 rounded-none px-8 py-5 text-xs tracking-[0.15em] font-medium">
+               VIEW DETAILS
+             </Button>
+          </Link>
         </div>
       </div>
 
-      {/* Product Info */}
       <div className="pt-5 text-center">
-        <p className="text-xs tracking-[0.1em] text-slate-500 mb-2">
-          {product.category}
-        </p>
-        <h3 className="font-serif text-lg font-light text-black mb-2">
+        {product.category && (
+          <p className="text-xs tracking-[0.1em] text-slate-500 mb-2">
+            {product.category}
+          </p>
+        )}
+        <h3 className="font-serif text-lg font-light text-black mb-2 line-clamp-1">
           {product.name}
         </h3>
         <p className="text-sm tracking-wider text-black">
@@ -142,11 +113,10 @@ function ProductCard({ product }: { product: Product }) {
 }
 
 // Product Grid Section
-function ProductGrid() {
+function ProductGrid({ products, isLoading }: { products: Product[], isLoading: boolean }) {
   return (
     <section className="bg-white py-20 lg:py-28">
       <div className="max-w-[1800px] mx-auto px-6 lg:px-12">
-        {/* Section Header */}
         <div className="text-center mb-16">
           <h2 className="font-serif text-3xl md:text-4xl font-light tracking-wider text-black mb-4">
             Featured Collection
@@ -154,14 +124,22 @@ function ProductGrid() {
           <div className="w-16 h-px bg-black mx-auto" />
         </div>
 
-        {/* Product Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-1">
-          {featuredProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
+        {isLoading ? (
+           <div className="flex justify-center py-20">
+             <p className="text-sm tracking-widest text-neutral-400 animate-pulse uppercase">Loading Collection...</p>
+           </div>
+        ) : products.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {products.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        ) : (
+           <div className="text-center py-20">
+             <p className="text-sm tracking-widest text-neutral-400 uppercase">No featured products found.</p>
+           </div>
+        )}
 
-        {/* View All CTA */}
         <div className="text-center mt-16">
           <Link href="/catalog">
             <Button variant="outline" className="rounded-none border-black text-black hover:bg-black hover:text-white px-12 py-6 text-sm tracking-[0.2em] font-medium transition-all duration-300">
@@ -205,10 +183,29 @@ function CampaignSection() {
 
 // Main Page Component
 export default function LuxuryHomePage() {
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  useEffect(() => {
+    const fetchFeaturedProducts = async () => {
+      try {
+        setIsLoading(true)
+        // Hit the endpoint using the featured flag we set up in the backend
+        // We limit to 4 to perfectly fill the 4-column grid on desktop
+        const response = await api.get("/api/v1/products/?featured=true&limit=4")
+        setFeaturedProducts(response.data)
+      } catch (error) {
+        console.error("Failed to fetch featured products:", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchFeaturedProducts()
+  }, [])
   return (
     <div className="bg-white">
       <HeroSection />
-      <ProductGrid />
+      <ProductGrid products={featuredProducts} isLoading={isLoading} />
       <CampaignSection />
     </div>
   )
