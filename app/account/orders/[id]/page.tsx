@@ -20,12 +20,12 @@ interface OrderItem {
 interface ProductData {
   id: string
   name: string
-  image_url: string | null
+  image_urls: string[]
 }
 
 interface EnrichedOrderItem extends OrderItem {
   name: string
-  image_url: string | null
+  image_urls: string[]
 }
 
 interface Order {

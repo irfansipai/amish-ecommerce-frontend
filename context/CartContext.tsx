@@ -17,7 +17,7 @@ interface ApiCartItem {
   name: string;
   price: string;
   quantity: number;
-  image_url: string | null;
+  image_urls: string[];
   size: string | null;
   variant: string | null;
 }
@@ -33,7 +33,7 @@ export interface CartItem {
   name: string;
   price: number | string;
   quantity: number;
-  image_url: string | null;
+  image_urls: string[];
   size: string | null;
   variant: string | null;
 }
