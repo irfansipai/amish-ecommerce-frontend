@@ -3,20 +3,21 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, Phone, MapPin, Sparkles } from "lucide-react";
+import { ChevronLeft, Phone } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { api } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
+import { toast } from "sonner";
+import ReactMarkdown from "react-markdown";
+
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { useAuth } from "@/context/AuthContext";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 import {
   Carousel,
   CarouselContent,
@@ -33,71 +34,39 @@ interface Product {
   stock: number;
   is_active: boolean;
   image_urls: string[];
+  attributes?: Record<string, string[]>;
 }
-
-interface ProductState {
-  id: string;
-  name: string;
-  description: string;
-  price: string;
-  sku: string;
-  stock: number;
-  is_active: boolean;
-  image_urls: string[];
-}
-
-const productDetails = [
-  "Black treated calf leather with worn-out effect",
-  "Stretch side inserts",
-  "Green and red Web leather detail at the sleeves",
-  "Tonal lining",
-  "Padded collar",
-  "Hidden snap buttons at the collar and cuffs",
-  "Zip closure at the cuffs",
-  "Front zip closure",
-  "Regular fit",
-  "Total length: 56.8cm; Shoulder: 52.8cm; Chest: 105cm; Sleeves length: 62.4cm; based on a size 48 (IT)",
-  "Made in Italy",
-  "Genuine leather: Calfskin",
-  "Genuine leather: Buffalo",
-  "Lining: 75% Acetate, 25% Cotton",
-  "Lining: 78% Polyamide, 18% Viscose, 4% Elastane",
-  "Lining: 100% Silk",
-  "Pocket lining: 100% Cotton",
-];
-
-const availableSizes = ["44", "46", "48", "50", "52", "54", "56"];
 
 export default function ProductDetailPage() {
   const params = useParams<{ id: string }>();
-  const [openAccordions, setOpenAccordions] = useState<string[]>([
-    "product-details",
-  ]);
-  const [selectedSize, setSelectedSize] = useState(availableSizes[0]);
-  const [product, setProduct] = useState<ProductState | null>(null);
-  const [loading, setLoading] = useState(true);
+  const router = useRouter();
   const { addToCart } = useCart();
   const { user } = useAuth();
-  const router = useRouter();
+
+  const [product, setProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Track multiple selections (e.g., Size, Color)
+  const [selectedAttributes, setSelectedAttributes] = useState<Record<string, string>>({});
+
+  // Track accordion states dynamically
+  const [openAccordions, setOpenAccordions] = useState<string[]>(["product-details"]);
 
   const [carouselApi, setCarouselApi] = useState<CarouselApi>();
   const [currentSlide, setCurrentSlide] = useState(0);
 
+  // Carousel tracking
   useEffect(() => {
-    if (!carouselApi) {
-      return;
-    }
-
+    if (!carouselApi) return;
     setCurrentSlide(carouselApi.selectedScrollSnap());
-
     carouselApi.on("select", () => {
       setCurrentSlide(carouselApi.selectedScrollSnap());
     });
   }, [carouselApi]);
 
+  // Fetch product and initialize attributes
   useEffect(() => {
     const productId = params?.id;
-
     if (!productId) {
       setLoading(false);
       return;
@@ -105,20 +74,31 @@ export default function ProductDetailPage() {
 
     const fetchProduct = async () => {
       setLoading(true);
-
       try {
-        const response = await api.get<Product>(
-          `/api/v1/products/${productId}`,
-        );
+        const response = await api.get<Product>(`/api/v1/products/${productId}`);
         const data = response.data;
 
         setProduct({
           ...data,
           description: data.description || "No description available.",
-          image_urls: data.image_urls && data.image_urls.length > 0
-            ? data.image_urls
-            : ["/placeholder.svg?height=800&width=600"],
+          image_urls: data.image_urls?.length ? data.image_urls : ["/placeholder.svg?height=800&width=600"],
         });
+
+        // Initialize default attribute selections and open the accordions
+        if (data.attributes) {
+          const defaults: Record<string, string> = {};
+          const accordionsToOpen = ["product-details"];
+
+          Object.entries(data.attributes).forEach(([key, values]) => {
+            if (values.length > 0) {
+              defaults[key] = values[0]; // Select first option by default
+            }
+            accordionsToOpen.push(`attr-${key}`); // Open this accordion by default
+          });
+
+          setSelectedAttributes(defaults);
+          setOpenAccordions(accordionsToOpen);
+        }
       } catch (error) {
         console.error("Failed to fetch product:", error);
         setProduct(null);
@@ -130,25 +110,41 @@ export default function ProductDetailPage() {
     fetchProduct();
   }, [params]);
 
+  const handleAttributeSelect = (attributeName: string, value: string) => {
+    setSelectedAttributes(prev => ({
+      ...prev,
+      [attributeName]: value
+    }));
+  };
+
   const handleAddToCart = () => {
     if (!user) {
       toast.error("Authentication Required", {
-        description:
-          "Please sign in or create an account to add items to your bag.",
+        description: "Please sign in or create an account to add items to your bag.",
       });
       router.push("/auth");
       return;
     }
 
-    if (!product) {
-      return;
-    }
+    if (!product) return;
+
+    // Convert selected attributes into a formatted string (e.g., "Color: Red | Size: M")
+    const variantString = Object.entries(selectedAttributes)
+      .map(([key, val]) => `${key}: ${val}`)
+      .join(" | ") || "Default";
+
+    // Extract Size explicitly if your backend cart specifically tracks 'size' separately
+    const specificSize = selectedAttributes["Size"] || selectedAttributes["size"] || "Default";
 
     addToCart({
       product_id: product.id,
       quantity: 1,
-      size: selectedSize,
-      variant: "Default",
+      size: specificSize,
+      variant: variantString,
+    });
+
+    toast.success("Added to Bag", {
+      description: `${product.name} has been added.`
     });
   };
 
@@ -165,24 +161,15 @@ export default function ProductDetailPage() {
   if (!product) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <p className="text-sm tracking-wide text-muted-foreground">
-          Product not found
-        </p>
+        <p className="text-sm tracking-wide text-muted-foreground">Product not found</p>
       </div>
     );
   }
 
   return (
     <div className="bg-background">
-      {/* Editorial Gallery */}
       <section className="w-full relative group">
-        <Carousel
-          setApi={setCarouselApi}
-          opts={{
-            loop: true,
-          }}
-          className="w-full"
-        >
+        <Carousel setApi={setCarouselApi} opts={{ loop: true }} className="w-full">
           <CarouselContent className="ml-0">
             {product.image_urls.map((imgUrl, index) => (
               <CarouselItem key={index} className="pl-0 basis-full lg:basis-1/2 border-r border-white/10">
@@ -205,9 +192,7 @@ export default function ProductDetailPage() {
           {product.image_urls.map((_, index) => (
             <div
               key={index}
-              className={`h-[2px] transition-all duration-500 ease-in-out ${currentSlide === index
-                ? "w-8 bg-white"
-                : "w-4 bg-white/50"
+              className={`h-[2px] transition-all duration-500 ease-in-out ${currentSlide === index ? "w-8 bg-white" : "w-4 bg-white/50"
                 }`}
             />
           ))}
@@ -217,98 +202,76 @@ export default function ProductDetailPage() {
       {/* Information Section */}
       <section className="max-w-7xl mx-auto px-6 md:px-12 py-12 md:py-16">
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-12 lg:gap-20">
-          {/* Left Column - The Narrative (60%) */}
+
+ {/* Left Column - The Narrative */}
           <div className="lg:col-span-3">
-            {/* Tag */}
-            <p className="text-[10px] tracking-[0.2em] text-muted-foreground mb-2">
-              SEE NOW, BUY NOW
-            </p>
+            <p className="text-[10px] tracking-[0.2em] text-muted-foreground mb-2">SEE NOW, BUY NOW</p>
+            <h2 className="font-serif text-xl md:text-2xl font-light tracking-wide mb-3">{product.name}</h2>
+            <p className="text-base font-light tracking-wide mb-8">₹ {product.price}</p>
 
-            {/* Product Title */}
-            <h2 className="font-serif text-xl md:text-2xl font-light tracking-wide mb-3">
-              {product.name}
-            </h2>
-
-            {/* Price */}
-            <p className="text-base font-light tracking-wide mb-8">
-              {product.price}
-            </p>
-
-            {/* Size Accordion */}
+            {/* SINGLE COMBINED ACCORDION */}
             <Accordion
               type="multiple"
               value={openAccordions}
               onValueChange={setOpenAccordions}
-              className="border-t border-border/40"
+              className="border-t border-border/40 mb-8"
             >
-              <AccordionItem value="size" className="border-border/40">
-                <AccordionTrigger className="text-sm font-light tracking-wide hover:no-underline py-4">
-                  Size
-                </AccordionTrigger>
-                <AccordionContent>
-                  <div className="grid grid-cols-4 gap-2 pb-2">
-                    {availableSizes.map((size) => (
-                      <button
-                        key={size}
-                        type="button"
-                        onClick={() => setSelectedSize(size)}
-                        className={`border py-3 text-sm transition-colors ${selectedSize === size
-                          ? "border-foreground bg-foreground text-background"
-                          : "border-border/60 hover:border-foreground"
-                          }`}
-                      >
-                        {size}
-                      </button>
-                    ))}
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
+              {/* 1. Dynamic Attributes (Size, Color, etc.) */}
+              {product.attributes && Object.entries(product.attributes).map(([attrName, values]) => (
+                <AccordionItem key={attrName} value={`attr-${attrName}`} className="border-border/40">
+                  <AccordionTrigger className="text-sm font-light tracking-wide hover:no-underline py-4 uppercase">
+                    {attrName}
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <div className="grid grid-cols-4 gap-2 pb-2">
+                      {values.map((val) => (
+                        <button
+                          key={val}
+                          type="button"
+                          onClick={() => handleAttributeSelect(attrName, val)}
+                          className={`border py-3 text-sm transition-colors ${selectedAttributes[attrName] === val
+                              ? "border-foreground bg-foreground text-background"
+                              : "border-border/60 hover:border-foreground"
+                            }`}
+                        >
+                          {val}
+                        </button>
+                      ))}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
 
-            {/* Product Description Section */}
-            <div className="mt-10">
-              <h3 className="text-sm font-medium tracking-wide mb-2">
-                PRODUCT DESCRIPTION
-              </h3>
-              <p className="text-[11px] text-muted-foreground tracking-wide mb-4">
-                Style {product.sku}
-              </p>
-              <p className="text-sm font-light leading-relaxed text-foreground/90">
-                {product.description}
-              </p>
-            </div>
-
-            {/* Product Details Accordion */}
-            <Accordion
-              type="multiple"
-              value={openAccordions}
-              onValueChange={setOpenAccordions}
-              className="mt-8 border-t border-border/40"
-            >
+              {/* 2. Static Product Details (Markdown) */}
               <AccordionItem
                 value="product-details"
                 className="border-border/40"
               >
-                <AccordionTrigger className="text-sm font-light tracking-wide hover:no-underline py-4">
+                <AccordionTrigger className="text-sm font-light tracking-wide hover:no-underline py-4 uppercase">
                   Product Details
                 </AccordionTrigger>
                 <AccordionContent>
-                  <ul className="space-y-1.5 pb-2">
-                    {productDetails.map((detail, index) => (
-                      <li
-                        key={index}
-                        className="text-sm font-light text-foreground/80 flex items-start"
-                      >
-                        <span className="mr-2">•</span>
-                        {detail}
-                      </li>
-                    ))}
-                  </ul>
+                  <div className="text-sm font-light leading-relaxed text-foreground/90">
+                    <p className="text-[11px] text-muted-foreground tracking-wide mb-6 uppercase">Style {product.sku}</p>
+
+                    <ReactMarkdown
+                      components={{
+                        p: ({ node, ...props }) => <p className="mb-4" {...props} />,
+                        ul: ({ node, ...props }) => <ul className="list-disc pl-5 mb-4 space-y-1.5" {...props} />,
+                        ol: ({ node, ...props }) => <ol className="list-decimal pl-5 mb-4 space-y-1.5" {...props} />,
+                        li: ({ node, ...props }) => <li className="text-foreground/80" {...props} />,
+                        strong: ({ node, ...props }) => <strong className="font-medium text-foreground" {...props} />,
+                      }}
+                    >
+                      {product.description}
+                    </ReactMarkdown>
+                  </div>
                 </AccordionContent>
               </AccordionItem>
 
+              {/* 3. Static Commitment */}
               <AccordionItem value="commitment" className="border-border/40">
-                <AccordionTrigger className="text-sm font-light tracking-wide hover:no-underline py-4">
+                <AccordionTrigger className="text-sm font-light tracking-wide hover:no-underline py-4 uppercase">
                   Our Commitment
                 </AccordionTrigger>
                 <AccordionContent>
@@ -324,24 +287,17 @@ export default function ProductDetailPage() {
             </Accordion>
           </div>
 
-          {/* Right Column - The Buy Box (40%) */}
+          {/* Right Column - The Buy Box */}
           <div className="lg:col-span-2">
             <div className="sticky top-8">
-              {/* Back to Catalog Link */}
-              <Link
-                href="/catalog"
-                className="inline-flex items-center gap-2 text-sm font-semibold uppercase text-foreground hover:underline transition-colors mb-6"
-              >
-                <ChevronLeft className="w-4 h-4" />
-                Back to Catalog
+              <Link href="/catalog" className="inline-flex items-center gap-2 text-sm font-semibold uppercase text-foreground hover:underline transition-colors mb-6">
+                <ChevronLeft className="w-4 h-4" /> Back to Catalog
               </Link>
 
-              {/* Helper Text */}
               <p className="text-sm font-light text-muted-foreground mb-4">
-                Select the size of the item to see the expected delivery date.
+                Select your preferences to see the expected delivery date.
               </p>
 
-              {/* CTA Button */}
               <button
                 type="button"
                 onClick={handleAddToCart}
@@ -353,50 +309,20 @@ export default function ProductDetailPage() {
               {/* Utility Links */}
               <div className="mt-8 space-y-5">
                 <div className="flex items-start gap-3">
-                  <Phone
-                    className="w-4 h-4 mt-0.5 flex-shrink-0"
-                    strokeWidth={1.5}
-                  />
+                  <Phone className="w-4 h-4 mt-0.5 flex-shrink-0" strokeWidth={1.5} />
                   <div>
-                    <p className="text-sm font-light underline underline-offset-2 cursor-pointer hover:opacity-70">
+                    <Link href="/contact" className="text-sm font-light underline underline-offset-2 hover:opacity-70 block">
                       Contact Us
-                    </p>
+                    </Link>
                     <p className="text-xs text-muted-foreground mt-1">
                       Our Client Advisors are available to help you.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <MapPin
-                    className="w-4 h-4 mt-0.5 flex-shrink-0"
-                    strokeWidth={1.5}
-                  />
-                  <div>
-                    <p className="text-sm font-light underline underline-offset-2 cursor-pointer hover:opacity-70">
-                      Find in store and Book an appointment
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <Sparkles
-                    className="w-4 h-4 mt-0.5 flex-shrink-0"
-                    strokeWidth={1.5}
-                  />
-                  <div>
-                    <p className="text-sm font-light underline underline-offset-2 cursor-pointer hover:opacity-70">
-                      Maison Services
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Complimentary Shipping, Complimentary Exchanges & Returns,
-                      Secure Payments and Signature Packaging
                     </p>
                   </div>
                 </div>
               </div>
             </div>
           </div>
+
         </div>
       </section>
     </div>
