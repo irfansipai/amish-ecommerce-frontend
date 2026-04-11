@@ -15,7 +15,7 @@ interface OrderItem {
     quantity: number
     price_at_purchase: string
     name?: string
-    image_url?: string | null
+    image_urls?: string[]
 }
 
 interface GuestOrder {
@@ -96,13 +96,13 @@ function GuestReceiptContent() {
                             return {
                                 ...item,
                                 name: prodRes.data.name,
-                                image_url: prodRes.data.image_url,
+                                image_urls: prodRes.data.image_urls,
                             }
                         } catch {
                             return {
                                 ...item,
                                 name: "Product Item",
-                                image_url: null,
+                                image_urls: [],
                             }
                         }
                     })
@@ -172,7 +172,7 @@ function GuestReceiptContent() {
                 {/* Header / Ty Message */}
                 <div className="text-center space-y-6">
                     <div className="mx-auto w-16 h-16 bg-zinc-900 rounded-full flex items-center justify-center mb-6">
-                        <span className="text-white text-xl font-serif font-light">L</span>
+                        <span className="text-white text-xl font-serif font-light">M</span>
                     </div>
                     <h1 className="text-3xl font-light tracking-[0.2em] text-zinc-900 uppercase">
                         Order Confirmed
@@ -217,16 +217,20 @@ function GuestReceiptContent() {
                         </div>
 
                         <div className="space-y-6">
-                            {displayItems.map((item) => (
-                                <div key={item.id} className="flex gap-4">
-                                    <div className="relative h-20 w-20 flex-shrink-0 bg-zinc-100">
-                                        <Image
-                                            src={item.image_url || "/placeholder.svg?height=160&width=160"}
-                                            alt={item.name || "Product"}
-                                            fill
-                                            className="object-cover"
-                                        />
-                                    </div>
+                            {displayItems.map((item) => {
+                                // Safely grab the first image
+                                const displayImg = item.image_urls?.[0] || "/placeholder.svg?height=160&width=160"
+
+                                return (
+                                    <div key={item.id} className="flex gap-4">
+                                        <div className="relative h-20 w-20 flex-shrink-0 bg-zinc-100">
+                                            <Image
+                                                src={displayImg} // <--- Use the display variable
+                                                alt={item.name || "Product"}
+                                                fill
+                                                className="object-cover"
+                                            />
+                                        </div>
                                     <div className="flex flex-1 flex-col justify-center">
                                         <p className="text-sm font-medium text-zinc-900 truncate">
                                             {item.name}
@@ -239,7 +243,7 @@ function GuestReceiptContent() {
                                         </p>
                                     </div>
                                 </div>
-                            ))}
+                            )})}
                         </div>
                     </div>
 
