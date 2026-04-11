@@ -7,7 +7,7 @@ import axios from "axios"
 import { toast } from "sonner"
 import { Package, MapPin, CreditCard, Download } from "lucide-react"
 
-import { TAX_RATE, SHIPPING_CHARGE } from "@/lib/constants"
+
 
 interface OrderItem {
     id: string
@@ -21,6 +21,7 @@ interface OrderItem {
 interface GuestOrder {
     id: string
     status: string
+    subtotal: string
     total_amount: string
     tax_amount: string
     shipping_amount: string
@@ -160,14 +161,8 @@ function GuestReceiptContent() {
         )
     }
 
-    const subtotal = order.items.reduce(
-        (sum, item) => sum + parseFloat(item.price_at_purchase) * item.quantity,
-        0
-    )
-
-    const gstAmount = subtotal * TAX_RATE
-    const shippingAmount = parseFloat(order.shipping_amount) || SHIPPING_CHARGE
-    const grandTotal = subtotal + gstAmount + shippingAmount
+    // Totals come directly from the backend — no local math
+    const subtotal = order.subtotal
 
     const displayItems = enrichedItems.length > 0 ? enrichedItems : order.items
 
@@ -282,22 +277,22 @@ function GuestReceiptContent() {
                                     <span className="font-medium text-zinc-900">{formatINR(subtotal)}</span>
                                 </div>
                                 <div className="flex justify-between text-xs text-zinc-600">
-                                    <span className="tracking-wide">GST ({TAX_RATE * 100}%)</span>
+                                    <span className="tracking-wide">Tax (GST)</span>
                                     <span className="font-medium text-zinc-900">
-                                        {formatINR(gstAmount)}
+                                        {formatINR(order.tax_amount)}
                                     </span>
                                 </div>
                                 <div className="flex justify-between text-xs text-zinc-600">
                                     <span className="tracking-wide">Shipping</span>
                                     <span className="font-medium text-zinc-900">
-                                        {formatINR(shippingAmount)}
+                                        {formatINR(order.shipping_amount)}
                                     </span>
                                 </div>
                                 <div className="border-t border-zinc-200 pt-4 mt-4">
                                     <div className="flex justify-between text-sm">
                                         <span className="font-medium tracking-wide text-zinc-900">Grand Total</span>
                                         <span className="font-semibold text-zinc-900">
-                                            {formatINR(grandTotal)}
+                                            {formatINR(order.total_amount)}
                                         </span>
                                     </div>
                                 </div>

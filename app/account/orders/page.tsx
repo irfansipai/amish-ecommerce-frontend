@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { api } from "@/lib/api"
 import { ShoppingBag, ArrowRight } from "lucide-react"
-import { TAX_RATE, SHIPPING_CHARGE } from "@/lib/constants"
+
 
 interface OrderItem {
   id: string
@@ -17,9 +17,10 @@ interface Order {
   id: string
   status: string
   total_amount: string
+  tax_amount: string
+  shipping_amount: string
   created_at: string
   items: OrderItem[]
-  shipping_amount: string
 }
 
 function formatINR(amount: number) {
@@ -112,14 +113,8 @@ export default function OrdersPage() {
 
       <div className="space-y-4">
         {orders.map((order) => {
-          const subtotal = order.items.reduce(
-            (sum, item) => sum + parseFloat(item.price_at_purchase) * item.quantity,
-            0
-          )
-
-          const gstAmount = subtotal * TAX_RATE
-          const shippingAmount = parseFloat(order.shipping_amount) || SHIPPING_CHARGE
-          const grandTotal = subtotal + gstAmount + shippingAmount
+          // Totals are provided by the backend — no local math
+          const grandTotal = parseFloat(order.total_amount) || 0
 
           return (
             <Link

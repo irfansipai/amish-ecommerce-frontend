@@ -6,7 +6,6 @@ import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
 import { api } from "@/lib/api"
-import { TAX_RATE, SHIPPING_CHARGE } from "@/lib/constants"
 import { ArrowLeft, Package, MapPin, CreditCard } from "lucide-react"
 import { toast } from "sonner"
 
@@ -31,6 +30,7 @@ interface EnrichedOrderItem extends OrderItem {
 interface Order {
   id: string
   status: string
+  subtotal: string
   total_amount: string
   tax_amount: string
   shipping_amount: string
@@ -118,14 +118,14 @@ export default function OrderDetailsPage() {
               return {
                 ...item,
                 name: productRes.data.name,
-                image_url: productRes.data.image_url,
+                image_urls: productRes.data.image_urls,
               }
             } catch (err: any) {
               console.warn(`Failed to fetch product ${item.product_id}:`, err)
               return {
                 ...item,
                 name: "Unknown Product",
-                image_url: null,
+                image_urls: [],
               }
             }
           })
@@ -198,19 +198,13 @@ export default function OrderDetailsPage() {
   const canCancel =
     order.status.toUpperCase() === "PENDING" || order.status.toUpperCase() === "PAID"
 
-  const subtotal = order.items.reduce(
-    (sum, item) => sum + parseFloat(item.price_at_purchase) * item.quantity,
-    0
-  )
-
-  const gstAmount = subtotal * TAX_RATE
-  const shippingAmount = parseFloat(order.shipping_amount) || SHIPPING_CHARGE
-  const grandTotal = subtotal + gstAmount + shippingAmount
+  // Totals come directly from the backend — no local math
+  const subtotal = order.subtotal
 
   const displayItems = enrichedItems.length > 0 ? enrichedItems : order.items.map(item => ({
     ...item,
     name: "Loading...",
-    image_url: null,
+    image_urls: [],
   }))
 
   return (
@@ -284,7 +278,7 @@ export default function OrderDetailsPage() {
                   >
                     <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden bg-zinc-100">
                       <Image
-                        src={item.image_url || "/placeholder.jpg"}
+                        src={item.image_urls?.[0] || "/placeholder.jpg"}
                         alt={item.name}
                         fill
                         className="object-cover group-hover:opacity-75 transition-opacity"
@@ -341,9 +335,9 @@ export default function OrderDetailsPage() {
                 <span className="font-medium text-zinc-900">{formatINR(subtotal)}</span>
               </div>
               <div className="flex justify-between text-xs text-zinc-600">
-                <span className="tracking-wide">GST ({TAX_RATE * 100}%)</span>
+                <span className="tracking-wide">Tax (GST)</span>
                 <span className="font-medium text-zinc-900">
-                  {formatINR(gstAmount)}
+                  {formatINR(order.tax_amount)}
                 </span>
               </div>
               <div className="flex justify-between text-xs text-zinc-600">
@@ -356,7 +350,7 @@ export default function OrderDetailsPage() {
                 <div className="flex justify-between text-sm">
                   <span className="font-medium tracking-wide text-zinc-900">Grand Total</span>
                   <span className="font-semibold text-zinc-900">
-                    {formatINR(grandTotal)}
+                    {formatINR(order.total_amount)}
                   </span>
                 </div>
               </div>

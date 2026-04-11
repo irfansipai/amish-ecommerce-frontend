@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { api } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 
 interface ApiCartItem {
   id: string;
@@ -22,8 +23,21 @@ interface ApiCartItem {
   variant: string | null;
 }
 
+export interface CartSummary {
+  subtotal: number;
+  tax_amount: number;
+  shipping_amount: number;
+  discount_amount: number;
+  grand_total: number;
+}
+
 interface CartResponse {
   items: ApiCartItem[];
+  subtotal: number;
+  tax_amount: number;
+  shipping_amount: number;
+  discount_amount: number;
+  grand_total: number;
 }
 
 export interface CartItem {
@@ -45,9 +59,19 @@ export interface AddToCartItem {
   variant: string | null;
 }
 
+const DEFAULT_SUMMARY: CartSummary = {
+  subtotal: 0,
+  tax_amount: 0,
+  shipping_amount: 0,
+  discount_amount: 0,
+  grand_total: 0,
+};
+
 interface CartContextValue {
   cartItems: CartItem[];
+  cartSummary: CartSummary;
   cartCount: number;
+  /** @deprecated Use cartSummary.grand_total instead */
   cartTotal: number;
   isLoading: boolean;
   addToCart: (item: AddToCartItem) => Promise<void>;
@@ -58,37 +82,35 @@ interface CartContextValue {
 
 const CartContext = createContext<CartContextValue | undefined>(undefined);
 
-const mapApiCartItem = (item: ApiCartItem): CartItem => ({
-  ...item,
-});
+const mapApiCartItem = (item: ApiCartItem): CartItem => ({ ...item });
 
-const parsePrice = (price: number | string) => {
-  if (typeof price === "number") {
-    return price;
-  }
-
-  const parsedPrice = Number.parseFloat(price);
-  return Number.isNaN(parsedPrice) ? 0 : parsedPrice;
-};
-
-const fetchCartItems = async (): Promise<CartItem[]> => {
+const fetchCart = async (): Promise<{ items: CartItem[]; summary: CartSummary }> => {
   const response = await api.get<CartResponse>("/api/v1/carts/");
-  return response.data.items.map(mapApiCartItem);
+  const { items, subtotal, tax_amount, shipping_amount, discount_amount, grand_total } =
+    response.data;
+  return {
+    items: items.map(mapApiCartItem),
+    summary: { subtotal, tax_amount, shipping_amount, discount_amount, grand_total },
+  };
 };
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [cartSummary, setCartSummary] = useState<CartSummary>(DEFAULT_SUMMARY);
   const [isLoading, setIsLoading] = useState(true);
+
+  const { user } = useAuth();
 
   const syncCart = async () => {
     setIsLoading(true);
-
     try {
-      const items = await fetchCartItems();
+      const { items, summary } = await fetchCart();
       setCartItems(items);
+      setCartSummary(summary);
     } catch (error) {
       console.error("Failed to fetch cart:", error);
       setCartItems([]);
+      setCartSummary(DEFAULT_SUMMARY);
     } finally {
       setIsLoading(false);
     }
@@ -98,17 +120,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const token =
       typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
-    if (!token) {
+    if (!token || !user) {
       setIsLoading(false);
       setCartItems([]);
+      setCartSummary(DEFAULT_SUMMARY);
       return;
     }
 
     syncCart();
-  }, []);
+  }, [user]);
 
   const addToCart = async (item: AddToCartItem) => {
-    if (!localStorage.getItem("token")) {
+    if (!localStorage.getItem("token") || !user) {
       console.warn("Attempted to add to cart without authentication.");
       return;
     }
@@ -154,21 +177,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
     await syncCart();
   };
 
-  const cartCount = cartItems.reduce(
-    (total, item) => total + item.quantity,
-    0
-  );
-  const cartTotal = cartItems.reduce(
-    (total, item) => total + parsePrice(item.price) * item.quantity,
-    0
-  );
+  const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
 
   return (
     <CartContext.Provider
       value={{
         cartItems,
+        cartSummary,
         cartCount,
-        cartTotal,
+        cartTotal: cartSummary.grand_total,
         isLoading,
         addToCart,
         removeFromCart,

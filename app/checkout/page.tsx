@@ -11,7 +11,7 @@ import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Separator } from "@/components/ui/separator"
 import { useCart } from "@/context/CartContext"
 import { api } from "@/lib/api"
-import { SHIPPING_CHARGE } from "@/lib/constants"
+
 
 function formatINR(amount: number) {
   return new Intl.NumberFormat("en-IN", {
@@ -26,7 +26,7 @@ function normalizePrice(price: number | string) {
 }
 
 export default function CheckoutPage() {
-  const { cartItems, clearCart, cartTotal, isLoading } = useCart()
+  const { cartItems, cartSummary, clearCart, isLoading } = useCart()
   const router = useRouter()
   const [formData, setFormData] = useState({
     firstName: "",
@@ -57,9 +57,8 @@ export default function CheckoutPage() {
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
-  const subtotal = cartTotal
-  const shipping = SHIPPING_CHARGE
-  const total = subtotal + shipping
+  // All totals come directly from the backend via cartSummary — no local math
+  const { subtotal, tax_amount, shipping_amount, grand_total } = cartSummary
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -276,7 +275,7 @@ export default function CheckoutPage() {
                     <div key={item.id} className="flex gap-5">
                       <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden bg-zinc-100">
                         <Image
-                          src={item.image_url ?? "/placeholder.svg?height=160&width=160"}
+                          src={item.image_urls?.[0] ?? "/placeholder.svg?height=160&width=160"}
                           alt={item.name}
                           fill
                           className="object-cover"
@@ -308,9 +307,15 @@ export default function CheckoutPage() {
                     </span>
                   </div>
                   <div className="flex justify-between text-xs text-zinc-600">
+                    <span className="tracking-wide">Tax (GST)</span>
+                    <span className="font-medium text-zinc-900">
+                      {formatINR(tax_amount)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-xs text-zinc-600">
                     <span className="tracking-wide">Shipping</span>
                     <span className="font-medium text-zinc-900">
-                      {shipping === 0 ? "FREE" : formatINR(shipping)}
+                      {shipping_amount === 0 ? "FREE" : formatINR(shipping_amount)}
                     </span>
                   </div>
                   <Separator className="bg-zinc-200" />
@@ -319,7 +324,7 @@ export default function CheckoutPage() {
                       Total
                     </span>
                     <span className="font-semibold text-zinc-900">
-                      {formatINR(total)}
+                      {formatINR(grand_total)}
                     </span>
                   </div>
                 </div>

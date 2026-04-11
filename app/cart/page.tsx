@@ -11,10 +11,6 @@ import { Button } from "@/components/ui/button"
 import { useCart, type CartItem } from "@/context/CartContext"
 import { useAuth } from "@/context/AuthContext"
 
-// Match invoice.py configuration
-const TAX_RATE = 0.18 // 9% CGST + 9% SGST
-const SHIPPING_CHARGE = 500 // Flat rate in INR, update as needed
-
 // Format price with Indian Rupees (INR)
 const formatPrice = (price: number) => {
   return new Intl.NumberFormat("en-IN", {
@@ -42,20 +38,10 @@ export default function ShoppingBagPage() {
     return null
   }
 
-  const { cartItems, updateQuantity, removeFromCart, isLoading } = useCart()
+  const { cartItems, cartSummary, updateQuantity, removeFromCart, isLoading } = useCart()
 
-  // --- Centralized Math matching invoice.py ---
-  const taxableValue = cartItems.reduce(
-    (acc, item) => acc + normalizePrice(item.price) * item.quantity,
-    0
-  )
-  const gstAmount = taxableValue * TAX_RATE // Total 18% Tax
-  const totalWithTax = taxableValue + gstAmount
-  
-  // Only apply shipping if cart has items
-  const activeShippingCharge = cartItems.length > 0 ? SHIPPING_CHARGE : 0
-  const grandTotal = totalWithTax + activeShippingCharge
-  // ---------------------------------------------
+  // All totals come directly from the backend — no local math
+  const { subtotal, tax_amount, shipping_amount, grand_total } = cartSummary
 
   const isEmpty = !isLoading && cartItems.length === 0
   const getItemStyle = (item: CartItem) => {
@@ -124,7 +110,7 @@ export default function ShoppingBagPage() {
                 {cartItems.map((item) => {
                   // Fallback for image array
                   const displayImage = item.image_urls?.[0] || "/placeholder.svg?height=800&width=600";
-                  
+
                   return (
                     <div key={item.id} className="py-8">
                       <div className="flex gap-6">
@@ -159,7 +145,7 @@ export default function ShoppingBagPage() {
                             {/* Custom +/- Quantity & Price */}
                             <div className="flex items-start gap-8">
                               <div className="flex items-center border border-foreground/20 h-10">
-                                <button 
+                                <button
                                   onClick={() => handleQuantityChange(item.id, item.quantity, -1)}
                                   className="px-3 text-muted-foreground hover:text-foreground transition-colors"
                                 >
@@ -168,7 +154,7 @@ export default function ShoppingBagPage() {
                                 <span className="w-8 text-center text-xs font-medium">
                                   {item.quantity}
                                 </span>
-                                <button 
+                                <button
                                   onClick={() => handleQuantityChange(item.id, item.quantity, 1)}
                                   className="px-3 text-muted-foreground hover:text-foreground transition-colors"
                                 >
@@ -209,30 +195,30 @@ export default function ShoppingBagPage() {
 
                   <div className="mt-6 space-y-4">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Taxable Value</span>
-                      <span>{formatPrice(taxableValue)}</span>
+                      <span className="text-muted-foreground">Subtotal</span>
+                      <span>{formatPrice(subtotal)}</span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">GST (18%)</span>
-                      <span>{formatPrice(gstAmount)}</span>
+                      <span className="text-muted-foreground">Tax (GST)</span>
+                      <span>{formatPrice(tax_amount)}</span>
                     </div>
                     <div className="flex items-center justify-between text-sm pt-2">
                       <span className="text-muted-foreground">Shipping</span>
                       <span className="text-xs">
-                        {activeShippingCharge === 0 ? "Free" : formatPrice(activeShippingCharge)}
+                        {shipping_amount === 0 ? "Free" : formatPrice(shipping_amount)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between border-t pt-4 mt-4">
                       <span className="text-sm font-medium uppercase tracking-wide">
                         Grand Total
                       </span>
-                      <span className="text-lg font-normal">{formatPrice(grandTotal)}</span>
+                      <span className="text-lg font-normal">{formatPrice(grand_total)}</span>
                     </div>
                   </div>
 
                   {/* Charge Notice */}
                   <p className="mt-6 text-xs text-muted-foreground leading-relaxed">
-                    Taxes and shipping are calculated based on Indian standard rates. 
+                    Taxes and shipping are calculated based on Indian standard rates.
                     Final amount will be charged securely at checkout.
                   </p>
 
