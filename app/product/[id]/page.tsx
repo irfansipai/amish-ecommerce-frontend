@@ -5,12 +5,13 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, Phone } from "lucide-react";
+import { ChevronLeft, Phone, Heart } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { api } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
+import { useSavedItems } from "@/context/SavedItemsContext"
 
 import {
   Accordion,
@@ -42,7 +43,8 @@ export default function ProductDetailPage() {
   const router = useRouter();
   const { addToCart } = useCart();
   const { user } = useAuth();
-
+  const { savedItems, toggleSavedItem, isLoading: isSavedLoading } = useSavedItems()
+  const { isSaved } = useSavedItems()
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -139,8 +141,7 @@ export default function ProductDetailPage() {
     addToCart({
       product_id: product.id,
       quantity: 1,
-      size: specificSize,
-      variant: variantString,
+      attributes: selectedAttributes,
     });
 
     toast.success("Added to Bag", {
@@ -203,7 +204,7 @@ export default function ProductDetailPage() {
       <section className="max-w-7xl mx-auto px-6 md:px-12 py-12 md:py-16">
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-12 lg:gap-20">
 
- {/* Left Column - The Narrative */}
+          {/* Left Column - The Narrative */}
           <div className="lg:col-span-3">
             <p className="text-[10px] tracking-[0.2em] text-muted-foreground mb-2">SEE NOW, BUY NOW</p>
             <h2 className="font-serif text-xl md:text-2xl font-light tracking-wide mb-3">{product.name}</h2>
@@ -230,8 +231,8 @@ export default function ProductDetailPage() {
                           type="button"
                           onClick={() => handleAttributeSelect(attrName, val)}
                           className={`border py-3 text-sm transition-colors ${selectedAttributes[attrName] === val
-                              ? "border-foreground bg-foreground text-background"
-                              : "border-border/60 hover:border-foreground"
+                            ? "border-foreground bg-foreground text-background"
+                            : "border-border/60 hover:border-foreground"
                             }`}
                         >
                           {val}
@@ -304,6 +305,19 @@ export default function ProductDetailPage() {
                 className="w-full bg-foreground text-background py-4 text-sm tracking-[0.2em] font-medium hover:bg-foreground/90 transition-colors"
               >
                 ADD TO BAG
+              </button>
+
+              <button
+                type="button"
+                onClick={() => toggleSavedItem(product.id)}
+                className="w-full border border-foreground text-foreground py-4 text-sm tracking-[0.2em] font-medium hover:bg-neutral-50 transition-colors flex items-center justify-center gap-3 mt-3"
+              >
+                <Heart
+                  className={`w-4 h-4 transition-colors ${isSaved(product.id) ? "fill-foreground text-foreground" : "text-foreground"
+                    }`}
+                  strokeWidth={1.5}
+                />
+                {isSaved(product.id) ? "SAVED" : "SAVE FOR LATER"}
               </button>
 
               {/* Utility Links */}

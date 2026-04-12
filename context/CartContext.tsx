@@ -10,6 +10,7 @@ import {
 } from "react";
 import { api } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
+import { toast } from "sonner"
 
 interface ApiCartItem {
   id: string;
@@ -19,8 +20,7 @@ interface ApiCartItem {
   price: string;
   quantity: number;
   image_urls: string[];
-  size: string | null;
-  variant: string | null;
+  attributes: Record<string, string>;
 }
 
 export interface CartSummary {
@@ -48,15 +48,13 @@ export interface CartItem {
   price: number | string;
   quantity: number;
   image_urls: string[];
-  size: string | null;
-  variant: string | null;
+  attributes: Record<string, string>;
 }
 
 export interface AddToCartItem {
   product_id: string;
   quantity: number;
-  size: string | null;
-  variant: string | null;
+  attributes: Record<string, string>;
 }
 
 const DEFAULT_SUMMARY: CartSummary = {
@@ -78,6 +76,7 @@ interface CartContextValue {
   removeFromCart: (id: string) => Promise<void>;
   updateQuantity: (id: string, quantity: number) => Promise<void>;
   clearCart: () => Promise<void>;
+  updateCartItem: (id: string, updates: { quantity?: number; attributes?: Record<string, string> }) => Promise<void>;
 }
 
 const CartContext = createContext<CartContextValue | undefined>(undefined);
@@ -140,8 +139,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       await api.post("/api/v1/carts/items", {
         product_id: item.product_id,
         quantity: item.quantity,
-        size: item.size,
-        variant: item.variant,
+        attributes: item.attributes,
       });
 
       await syncCart();
@@ -177,6 +175,22 @@ export function CartProvider({ children }: { children: ReactNode }) {
     await syncCart();
   };
 
+  const updateCartItem = async (id: string, updates: { quantity?: number; attributes?: Record<string, string> }) => {
+    // If quantity is 0, just remove it entirely
+    if (updates.quantity === 0) {
+      await removeFromCart(id);
+      return;
+    }
+
+    try {
+      await api.patch(`/api/v1/carts/items/${id}`, updates);
+      await syncCart(); // Refresh to get the new backend totals
+    } catch (error) {
+      console.error("Failed to update item:", error);
+      toast.error("Failed to update item. Please try again.");
+    }
+  };
+  
   const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
 
   return (
@@ -191,6 +205,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         removeFromCart,
         updateQuantity,
         clearCart,
+        updateCartItem,
       }}
     >
       {children}

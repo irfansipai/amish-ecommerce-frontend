@@ -90,7 +90,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                         </li>
                         <li>
                             <Link 
-                                href={user ? "/wishlist" : "/auth"} 
+                                href={user ? "/saved-items" : "/auth"} 
                                 onClick={onClose} 
                                 className="text-sm tracking-widest uppercase hover:text-neutral-500 transition-colors"
                             >

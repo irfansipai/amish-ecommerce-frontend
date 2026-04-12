@@ -65,6 +65,19 @@ export default function CheckoutPage() {
     setErrorMessage("")
     setIsSubmitting(true)
 
+    const requiredFields = [
+      formData.firstName, formData.lastName, formData.email,
+      formData.phone, formData.address, formData.city,
+      formData.state, formData.pincode
+    ];
+
+    // Check if any required field is empty or just whitespace
+    if (requiredFields.some(field => !field || field.trim() === "")) {
+      setErrorMessage("Please fill out all required shipping fields.")
+      setIsSubmitting(false)
+      return // Stop the submission immediately!
+    }
+
     const payload = {
       shipping_address_line_1: formData.address,
       shipping_address_line_2: formData.addressLine2,
@@ -77,23 +90,21 @@ export default function CheckoutPage() {
     const idempotencyKey = crypto.randomUUID()
 
     try {
-      await api.post("/api/v1/orders/checkout", payload, {
+      const response = await api.post("/api/v1/orders/checkout", payload, {
         headers: {
           "Idempotency-Key": idempotencyKey,
         },
       })
 
-      // The backend has successfully created the order and wiped the database cart.
-      // We try to clear the frontend context, but we ignore any 404 errors 
-      // because we already know the backend deleted the items!
+      const newOrder = response.data
       try {
         await clearCart()
       } catch (clearError) {
         console.log("Cart already cleared by backend.")
       }
 
-      // Hard redirect to success page to ensure all fresh data is loaded
-      window.location.href = "/success"
+      // Hard redirect with the Order ID in the URL params
+      window.location.href = `/success?order_id=${newOrder.id}`
 
     } catch (error: any) {
       console.error("Checkout failed:", error)
@@ -285,9 +296,15 @@ export default function CheckoutPage() {
                         <h3 className="text-xs font-medium tracking-wide text-zinc-900">
                           {item.name}
                         </h3>
-                        <p className="mt-1 text-[10px] tracking-wide text-zinc-500">
-                          Size {item.size ?? "One Size"} / {item.variant ?? "Default"}
-                        </p>
+
+                        {/* UPDATED: Dynamic Attributes instead of hardcoded size/variant */}
+                        <div className="mt-1 space-y-0.5">
+                          {item.attributes && Object.entries(item.attributes).map(([key, value]) => (
+                            <p key={key} className="text-[10px] tracking-wide text-zinc-500 uppercase">
+                              {key}: {value as string}
+                            </p>
+                          ))}
+                        </div>
                         <p className="mt-2 text-sm font-medium text-zinc-900">
                           {formatINR(normalizePrice(item.price) * item.quantity)}
                         </p>

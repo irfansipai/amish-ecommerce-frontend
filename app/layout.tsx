@@ -8,6 +8,7 @@ import { Footer } from "@/components/Footer";
 import { CartProvider } from "@/context/CartContext";
 import { AuthProvider } from "@/context/AuthContext";
 import { Toaster } from "@/components/ui/sonner";
+import { SavedItemsProvider } from "@/context/SavedItemsContext";
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 
@@ -32,10 +33,12 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
           <AuthProvider>
             <CartProvider>
-              <Navbar />
-              <main className="flex-1">
-                {children}
-              </main>
+              <SavedItemsProvider>
+                <Navbar />
+                <main className="flex-1">
+                  {children}
+                </main>
+              </SavedItemsProvider>
             </CartProvider>
           </AuthProvider>
         <Footer />

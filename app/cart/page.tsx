@@ -3,13 +3,17 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Plus, Minus, Phone, Mail } from "lucide-react"
+import { Plus, Minus, Phone, Mail, Heart } from "lucide-react"
+import { api } from "@/lib/api"
+import { toast } from "sonner"
+
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Button } from "@/components/ui/button"
 import { useCart, type CartItem } from "@/context/CartContext"
 import { useAuth } from "@/context/AuthContext"
+import { useSavedItems } from "@/context/SavedItemsContext"
 
 // Format price with Indian Rupees (INR)
 const formatPrice = (price: number) => {
@@ -26,7 +30,14 @@ const normalizePrice = (price: number | string) =>
 
 export default function ShoppingBagPage() {
   const { user } = useAuth()
+  const { toggleSavedItem, isSaved } = useSavedItems()
+
   const router = useRouter()
+
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [editAttributes, setEditAttributes] = useState<Record<string, string>>({});
+  const [availableOptions, setAvailableOptions] = useState<Record<string, string[]>>({});
+  const [isFetchingOptions, setIsFetchingOptions] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -38,7 +49,7 @@ export default function ShoppingBagPage() {
     return null
   }
 
-  const { cartItems, cartSummary, updateQuantity, removeFromCart, isLoading } = useCart()
+  const { cartItems, cartSummary, updateQuantity, removeFromCart, updateCartItem, isLoading } = useCart()
 
   // All totals come directly from the backend — no local math
   const { subtotal, tax_amount, shipping_amount, grand_total } = cartSummary
@@ -56,6 +67,28 @@ export default function ShoppingBagPage() {
     }
   }
 
+  const handleEditClick = async (item: CartItem) => {
+    setEditingItemId(item.id);
+    setEditAttributes(item.attributes || {});
+    setIsFetchingOptions(true);
+
+    try {
+      // Fetch the full product to see what attributes are actually available
+      const response = await api.get(`/api/v1/products/${item.product_id}`);
+      setAvailableOptions(response.data.attributes || {});
+    } catch (error) {
+      toast.error("Failed to load product options.");
+      setEditingItemId(null);
+    } finally {
+      setIsFetchingOptions(false);
+    }
+  };
+
+  const handleSaveEdit = async (itemId: string) => {
+    await updateCartItem(itemId, { attributes: editAttributes });
+    setEditingItemId(null);
+    toast.success("Item updated successfully.");
+  };
   return (
     <div className="bg-background">
       {/* Hero Banner */}
@@ -124,21 +157,83 @@ export default function ShoppingBagPage() {
                           />
                         </div>
 
-                        {/* Product Details */}
+                        {/* Product Details & Edit Mode */}
                         <div className="flex flex-1 flex-col justify-between">
                           <div className="flex items-start justify-between gap-4">
-                            <div className="space-y-1.5">
-                              <h4 className="text-sm font-normal">{item.name}</h4>
-                              <p className="text-xs text-muted-foreground">
-                                Style# {getItemStyle(item)}
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                Details: {item.variant ?? "Default"}
-                              </p>
-                              {item.size && item.size !== "Default" && (
-                                <p className="text-xs text-muted-foreground">
-                                  Size: {item.size}
-                                </p>
+                            <div className="space-y-1.5 w-full">
+                              <Link href={`/product/${item.product_id}`}>
+                                <h4 className="text-sm font-normal hover:underline underline-offset-4 cursor-pointer">
+                                  {item.name}
+                                </h4>
+                              </Link>
+
+                              {/* --- INLINE EDIT UI --- */}
+                              {editingItemId === item.id ? (
+                                <div className="mt-4 p-4 border border-border/60 bg-muted/20 w-full max-w-sm space-y-4">
+                                  {isFetchingOptions ? (
+                                    <p className="text-xs text-muted-foreground animate-pulse tracking-wide uppercase">
+                                      Loading options...
+                                    </p>
+                                  ) : (
+                                    <>
+                                      {Object.entries(availableOptions).map(([attrName, options]) => (
+                                        <div key={attrName}>
+                                          <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
+                                            {attrName}
+                                          </p>
+                                          <div className="flex flex-wrap gap-2">
+                                            {options.map((opt) => (
+                                              <button
+                                                key={opt}
+                                                onClick={() => setEditAttributes(prev => ({ ...prev, [attrName]: opt }))}
+                                                className={`border px-3 py-1.5 text-xs transition-colors ${editAttributes[attrName] === opt
+                                                    ? "bg-foreground text-background border-foreground"
+                                                    : "bg-background text-foreground border-border hover:border-foreground"
+                                                  }`}
+                                              >
+                                                {opt}
+                                              </button>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      ))}
+
+                                      <div className="flex items-center gap-3 pt-2">
+                                        <button
+                                          onClick={() => handleSaveEdit(item.id)}
+                                          className="text-xs tracking-widest uppercase bg-foreground text-background px-4 py-2 hover:bg-foreground/90 transition-colors"
+                                        >
+                                          Save
+                                        </button>
+                                        <button
+                                          onClick={() => setEditingItemId(null)}
+                                          className="text-xs tracking-widest uppercase border border-border px-4 py-2 hover:bg-muted transition-colors"
+                                        >
+                                          Cancel
+                                        </button>
+                                      </div>
+                                    </>
+                                  )}
+                                </div>
+                              ) : (
+                                /* --- STANDARD DISPLAY MODE --- */
+                                <>
+                                  <p className="text-xs text-muted-foreground mt-1">
+                                    Style# {getItemStyle(item)}
+                                  </p>
+                                  {item.attributes && Object.entries(item.attributes).map(([key, value]) => (
+                                    <p key={key} className="text-xs text-muted-foreground">
+                                      {key}: {value}
+                                    </p>
+                                  ))}
+
+                                  <button
+                                    onClick={() => handleEditClick(item)}
+                                    className="text-[10px] tracking-widest uppercase underline underline-offset-4 text-muted-foreground hover:text-foreground mt-2 block transition-colors"
+                                  >
+                                    Edit Details
+                                  </button>
+                                </>
                               )}
                             </div>
 
@@ -174,6 +269,16 @@ export default function ShoppingBagPage() {
                               onClick={() => removeFromCart(item.id)}
                             >
                               Remove Item
+                            </button>
+                            <button
+                              className="flex items-center gap-1.5 hover:underline"
+                              onClick={() => toggleSavedItem(item.product_id)}
+                            >
+                              <Heart
+                                className={`size-3 transition-colors ${isSaved(item.product_id) ? "fill-foreground text-foreground" : ""
+                                  }`}
+                              />
+                              <span>{isSaved(item.product_id) ? "Saved" : "Save Item"}</span>
                             </button>
                           </div>
                         </div>
