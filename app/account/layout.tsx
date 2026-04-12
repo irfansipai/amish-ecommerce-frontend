@@ -1,3 +1,4 @@
+// app/account/layout.tsx
 "use client"
 
 import { useState } from "react"
