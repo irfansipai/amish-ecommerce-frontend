@@ -1,7 +1,7 @@
 // frontend/app/catalog/page.tsx
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, Suspense } from "react"
 import { api } from "@/lib/api"
 import Link from "next/link"
 import Image from "next/image"
@@ -203,8 +203,8 @@ function ProductGrid({ products }: { products: Product[] }) {
   )
 }
 
-// --- Main Page ---
-export default function CatalogPage() {
+// --- Content Component (uses useSearchParams) ---
+function CatalogContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   
@@ -220,12 +220,10 @@ export default function CatalogPage() {
   
   // Pagination States
   const [skip, setSkip] = useState(0)
-  const [limit] = useState(12) // Bumped to 12 to fill the 4-column grid
+  const [limit] = useState(12) 
   const [isLoading, setIsLoading] = useState(true)
   const [hasMore, setHasMore] = useState(true)
 
-  // 1. Fetch Categories on Mount
-  // Sync state if the URL changes (e.g. clicking Sidebar while already on /catalog)
   useEffect(() => {
     const newCategory = searchParams.get("category") || ""
     setActiveCategory(newCategory)
@@ -243,12 +241,10 @@ export default function CatalogPage() {
     fetchCategories()
   }, [])
 
-  // 2. Fetch Products Logic
   const fetchProducts = async (currentSkip: number, isReset: boolean = false) => {
     try {
       setIsLoading(true)
       
-      // Build dynamic URL based on state
       let url = `/api/v1/products/?offset=${currentSkip}&limit=${limit}&sort=${sortBy}`
       if (activeCategory) {
         url += `&category=${activeCategory}`
@@ -260,9 +256,9 @@ export default function CatalogPage() {
       setHasMore(productData.length === limit)
 
       if (isReset) {
-        setProducts(productData) // Wipe old products on sort/category change
+        setProducts(productData) 
       } else {
-        setProducts((prev) => [...prev, ...productData]) // Append on "Load More"
+        setProducts((prev) => [...prev, ...productData]) 
       }
     } catch (error) {
       console.error("Failed to fetch products:", error)
@@ -271,21 +267,17 @@ export default function CatalogPage() {
     }
   }
 
-  // 3. Watch for Category or Sort Changes
   useEffect(() => {
-    setSkip(0) // Reset pagination
-    fetchProducts(0, true) // Fetch fresh data
+    setSkip(0) 
+    fetchProducts(0, true) 
   }, [activeCategory, sortBy])
 
-  // 4. Handle "Load More"
   const handleLoadMore = () => {
     const newSkip = skip + limit
     setSkip(newSkip)
     fetchProducts(newSkip, false)
   }
 
-  // Helper to find category name for the Hero banner
-  // Update URL when user clicks the horizontal category nav
   const handleCategorySelect = (slug: string) => {
     setActiveCategory(slug)
     if (slug) {
@@ -298,7 +290,7 @@ export default function CatalogPage() {
   const currentCategoryName = categories.find(c => c.slug === activeCategory)?.name || ""
 
   return (
-    <main className="min-h-screen bg-background">
+    <>
       <CategoryNav 
         categories={categories} 
         activeCategory={activeCategory} 
@@ -340,6 +332,23 @@ export default function CatalogPage() {
           )}
         </>
       )}
+    </>
+  )
+}
+
+// --- Main Page Export with Suspense ---
+export default function CatalogPage() {
+  return (
+    <main className="min-h-screen bg-background">
+      <Suspense fallback={
+        <div className="flex items-center justify-center min-h-screen bg-background">
+          <p className="text-sm tracking-widest uppercase text-zinc-500 animate-pulse">
+            Loading Catalog...
+          </p>
+        </div>
+      }>
+        <CatalogContent />
+      </Suspense>
     </main>
   )
 }
