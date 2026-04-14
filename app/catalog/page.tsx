@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { useSearchParams, useRouter } from "next/navigation"
 
 // --- TypeScript Interfaces ---
 interface Product {
@@ -204,11 +205,17 @@ function ProductGrid({ products }: { products: Product[] }) {
 
 // --- Main Page ---
 export default function CatalogPage() {
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  
+  // Read the initial category from the URL, fallback to ""
+  const urlCategory = searchParams.get("category") || ""
+
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   
-  // View States
-  const [activeCategory, setActiveCategory] = useState<string>("")
+  // Initialize state with the URL parameter
+  const [activeCategory, setActiveCategory] = useState<string>(urlCategory)
   const [sortBy, setSortBy] = useState<string>("newest")
   
   // Pagination States
@@ -218,6 +225,12 @@ export default function CatalogPage() {
   const [hasMore, setHasMore] = useState(true)
 
   // 1. Fetch Categories on Mount
+  // Sync state if the URL changes (e.g. clicking Sidebar while already on /catalog)
+  useEffect(() => {
+    const newCategory = searchParams.get("category") || ""
+    setActiveCategory(newCategory)
+  }, [searchParams])
+
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -272,6 +285,16 @@ export default function CatalogPage() {
   }
 
   // Helper to find category name for the Hero banner
+  // Update URL when user clicks the horizontal category nav
+  const handleCategorySelect = (slug: string) => {
+    setActiveCategory(slug)
+    if (slug) {
+      router.push(`/catalog?category=${slug}`, { scroll: false })
+    } else {
+      router.push(`/catalog`, { scroll: false })
+    }
+  }
+    
   const currentCategoryName = categories.find(c => c.slug === activeCategory)?.name || ""
 
   return (
@@ -279,7 +302,7 @@ export default function CatalogPage() {
       <CategoryNav 
         categories={categories} 
         activeCategory={activeCategory} 
-        onSelectCategory={setActiveCategory} 
+        onSelectCategory={handleCategorySelect} 
       />
       <CategoryHero activeCategoryName={currentCategoryName} />
       

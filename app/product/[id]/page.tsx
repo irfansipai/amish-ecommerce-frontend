@@ -43,10 +43,14 @@ export default function ProductDetailPage() {
   const router = useRouter();
   const { addToCart } = useCart();
   const { user } = useAuth();
-  const { savedItems, toggleSavedItem, isLoading: isSavedLoading } = useSavedItems()
-  const { isSaved } = useSavedItems()
+  const { toggleSavedItem, isSaved } = useSavedItems();
+  
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Button loading states for instant visual feedback
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [isTogglingSave, setIsTogglingSave] = useState(false);
 
   // Track multiple selections (e.g., Size, Color)
   const [selectedAttributes, setSelectedAttributes] = useState<Record<string, string>>({});
@@ -119,7 +123,7 @@ export default function ProductDetailPage() {
     }));
   };
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (!user) {
       toast.error("Authentication Required", {
         description: "Please sign in or create an account to add items to your bag.",
@@ -130,15 +134,9 @@ export default function ProductDetailPage() {
 
     if (!product) return;
 
-    // Convert selected attributes into a formatted string (e.g., "Color: Red | Size: M")
-    const variantString = Object.entries(selectedAttributes)
-      .map(([key, val]) => `${key}: ${val}`)
-      .join(" | ") || "Default";
-
-    // Extract Size explicitly if your backend cart specifically tracks 'size' separately
-    const specificSize = selectedAttributes["Size"] || selectedAttributes["size"] || "Default";
-
-    addToCart({
+    setIsAddingToCart(true); // Trigger instant button feedback
+    try {
+      await addToCart({
       product_id: product.id,
       quantity: 1,
       attributes: selectedAttributes,
@@ -147,6 +145,37 @@ export default function ProductDetailPage() {
     toast.success("Added to Bag", {
       description: `${product.name} has been added.`
     });
+    } catch (error) {
+      toast.error("Failed to add item", {
+        description: "There was a problem adding this item to your bag."
+      });
+    } finally {
+      setIsAddingToCart(false);
+    }
+  };
+
+  const handleToggleSaved = async () => {
+    if (!product) return;
+    
+    // Check if it's currently saved before we await the toggle
+    const currentlySaved = isSaved(product.id);
+    
+    setIsTogglingSave(true); // Trigger instant button feedback
+    try {
+      await toggleSavedItem(product.id);
+      
+      if (currentlySaved) {
+        toast.success("Removed from Saved Items");
+      } else {
+        toast.success("Saved for Later");
+      }
+    } catch (error) {
+      toast.error("Action Failed", {
+        description: "We couldn't update your saved items."
+      });
+    } finally {
+      setIsTogglingSave(false);
+    }
   };
 
   if (loading) {
@@ -302,22 +331,24 @@ export default function ProductDetailPage() {
               <button
                 type="button"
                 onClick={handleAddToCart}
-                className="w-full bg-foreground text-background py-4 text-sm tracking-[0.2em] font-medium hover:bg-foreground/90 transition-colors"
+                disabled={isAddingToCart}
+                className="w-full bg-foreground text-background py-4 text-sm tracking-[0.2em] font-medium hover:bg-foreground/90 transition-colors disabled:opacity-80"
               >
-                ADD TO BAG
+                {isAddingToCart ? "ADDING..." : "ADD TO BAG"}
               </button>
 
               <button
                 type="button"
-                onClick={() => toggleSavedItem(product.id)}
-                className="w-full border border-foreground text-foreground py-4 text-sm tracking-[0.2em] font-medium hover:bg-neutral-50 transition-colors flex items-center justify-center gap-3 mt-3"
+                onClick={handleToggleSaved}
+                disabled={isTogglingSave}
+                className="w-full border border-foreground text-foreground py-4 text-sm tracking-[0.2em] font-medium hover:bg-neutral-50 transition-colors flex items-center justify-center gap-3 mt-3 disabled:opacity-50"
               >
                 <Heart
                   className={`w-4 h-4 transition-colors ${isSaved(product.id) ? "fill-foreground text-foreground" : "text-foreground"
-                    }`}
+                    } ${isTogglingSave ? "animate-pulse" : ""}`}
                   strokeWidth={1.5}
                 />
-                {isSaved(product.id) ? "SAVED" : "SAVE FOR LATER"}
+                {isTogglingSave ? "SAVING..." : isSaved(product.id) ? "SAVED" : "SAVE FOR LATER"}
               </button>
 
               {/* Utility Links */}

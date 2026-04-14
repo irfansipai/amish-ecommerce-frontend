@@ -198,6 +198,9 @@ export default function OrderDetailsPage() {
   const canCancel =
     order.status.toUpperCase() === "PENDING" || order.status.toUpperCase() === "PAID"
 
+  // Only allow invoice download if the order is paid (or subsequently shipped/delivered)
+  const canDownloadInvoice = ["PAID", "SHIPPED", "DELIVERED"].includes(order.status.toUpperCase())
+
   // Totals come directly from the backend — no local math
   const subtotal = order.subtotal
 
@@ -243,6 +246,7 @@ export default function OrderDetailsPage() {
               {cancelling ? "CANCELLING..." : "CANCEL ORDER"}
             </button>
           )}
+          {canDownloadInvoice && (
           <button
             onClick={handleDownload}
             disabled={isDownloading}
@@ -250,6 +254,7 @@ export default function OrderDetailsPage() {
           >
             {isDownloading ? "DOWNLOADING..." : "DOWNLOAD INVOICE"}
           </button>
+          )}
         </div>
       </div>
 

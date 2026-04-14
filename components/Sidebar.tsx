@@ -4,29 +4,39 @@ import { X, ChevronRight } from "lucide-react"
 import { api } from "@/lib/api"
 import Link from "next/link"
 import { useAuth } from "@/context/AuthContext"
-import { useRouter } from "next/navigation"
 
 interface SidebarProps {
     isOpen: boolean
     onClose: () => void
 }
 
+// Added this interface
+interface SidebarCategory {
+    name: string
+    slug: string
+}
+
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
-    const [categories, setCategories] = useState<string[]>([])
+    // Changed state to hold the object instead of just a string
+    const [categories, setCategories] = useState<SidebarCategory[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const { user } = useAuth()
-    const router = useRouter()
 
     useEffect(() => {
         const fetchCategories = async () => {
             try {
                 setIsLoading(true)
                 const response = await api.get("/api/v1/categories/")
-                setCategories(response.data.map((cat:any) => cat.name))
+                // Just pass the data directly, assuming your API returns {name, slug}
+                setCategories(response.data) 
             } catch (error) {
                 console.error("Failed to fetch categories", error)
-                // Fallback just in case
-                setCategories(["Women", "Handbags", "Clothing", "Shoes", "Accessories"])
+                // Fallback updated to include slugs
+                setCategories([
+                    { name: "Bags", slug: "bags" },
+                    { name: "Shoes", slug: "shoes" },
+                    { name: "Clothing", slug: "clothing" }
+                ])
             } finally {
                 setIsLoading(false)
             }
@@ -56,14 +66,16 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 <div className="px-10 py-6 pb-32">
                     <ul className="space-y-0">
                         {categories.map((c) => (
-                            <li key={c}>
+                            <li key={c.slug}>
+                                {/* Using c.slug for the URL instead of name */}
                                 <Link
-                                    href={`/catalog?category=${c}`}
+                                    href={`/catalog?category=${c.slug}`}
                                     onClick={onClose}
                                     className="flex justify-between items-center w-full py-5 border-b border-neutral-100 group transition-all hover:translate-x-1"
                                 >
+                                    {/* Using c.name for display */}
                                     <span className="text-sm md:text-base tracking-[0.1em] uppercase text-black group-hover:text-neutral-500 transition-colors">
-                                        {c}
+                                        {c.name}
                                     </span>
                                     <ChevronRight className="w-4 h-4 text-black group-hover:text-neutral-500 transition-colors" strokeWidth={1} />
                                 </Link>
